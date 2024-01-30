@@ -2,7 +2,7 @@
 
 [![Test Workflow](https://github.com/SomeRanDev/modifaxe/actions/workflows/test.yml/badge.svg)](https://github.com/SomeRanDev/modifaxe/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<a href=""><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Reflaxe Thread"/></a>
+<a href=""><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Modifaxe Thread"/></a>
 
 *A tool for modifying hardcoded values in your post-build Haxe application.*
 
@@ -17,7 +17,7 @@ Change a value -> recompile -> test -> repeat. Every programmer has experienced 
 
 | Topic | Description |
 | --- | --- |
-| [Installation](#automatic-installation) | How to install this library into your project. |
+| [Installation](#installation) | How to install this library into your project. |
 | [.modhx Format](#modhx-format) | An explanation of the `.modhx` format. |
 
 &nbsp;
@@ -54,6 +54,7 @@ function getWindowSize() {
 &nbsp;
 
 Compile your Haxe project to a `sys` target with file-system access.
+
 Modify the value(s) in the generated `values.modhx` file:
 ```
 Main.getWindowSize:
@@ -78,7 +79,9 @@ Something # Invalid comment
 
 &nbsp;
 
-All content starts with a unique identifier followed by a colon. A list of values should follow with the `\t<type>.<name>=<value>` format:
+All content starts with a unique identifier followed by a colon.
+
+A list of values should follow with the `\t<type>.<name>=<value>` format:
 ```
 My.Unique.ID:
 	b.trueOrFalse=true
@@ -88,7 +91,7 @@ My.Unique.ID:
 They can be multiline."
 ```
 
-Please note the order of value entries MATTERS. The Haxe code for parsing the custom-made `.modhx` is hardcoded to expect the values in the exact order. The section and value identifiers exist to help locate values to manually modify.
+Please note the order of value entries MATTERS. The Haxe code for parsing the custom-made `.modhx` is hardcoded to expect the values in their generated order. The section and value identifiers exist to help humans locate values to modify.
 
 &nbsp;
 
