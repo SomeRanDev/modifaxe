@@ -34,14 +34,10 @@ haxelib install modifaxe
 haxelib git modifaxe https://github.com/SomeRanDev/modifaxe.git
 ```
 
-&nbsp;
-
 Next add the library to your .hxml or compile command:
 ```
 -lib modifaxe
 ```
-
-&nbsp;
 
 Add the `@:modifaxe` metadata to a class or function:
 ```haxe
@@ -50,8 +46,6 @@ function getWindowSize() {
 	return 800;
 }
 ```
-
-&nbsp;
 
 Compile your Haxe project to a `sys` target with file-system access.
 
@@ -70,6 +64,7 @@ The `.modhx` is a text-based file format designed specifically for this project.
 
 &nbsp;
 
+### Comments
 Lines that (excluding whitespace) start with pound sign (#) are comments and are ignored during parsing:
 ```
 # This is a comment.
@@ -79,7 +74,8 @@ Something # Invalid comment
 
 &nbsp;
 
-All content starts with a unique identifier followed by a colon.
+### Sections and Values
+Entires are separated into sections. A section is a unique identifier followed by a colon.
 
 A list of values should follow with the `\t<type>.<name>=<value>` format:
 ```
@@ -95,6 +91,8 @@ Please note the order of value entries MATTERS. The Haxe code for parsing the cu
 
 &nbsp;
 
+### Value Declaration Options
+
 There are four types supported:
  * `b` is a boolean.
  * `i` is an integer.
@@ -104,7 +102,3 @@ There are four types supported:
 The `name` must be a valid Haxe variable name.
 
 The `value` must be a valid constant Haxe expression of the specified type.
-
-&nbsp;
-&nbsp;
-&nbsp;
