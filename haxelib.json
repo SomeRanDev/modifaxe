@@ -1,0 +1,18 @@
+{
+	"name": "modifaxe",
+	"version": "0.0.0",
+	"description": "A tool for modifying hardcoded values after compiling.",
+	"url": "https://github.com/SomeRanDev/modifaxe",
+	"license": "MIT",
+	"tags": [
+		"debug",
+		"testing",
+		"mod",
+		"modding",
+		"macro",
+		"compiler"
+	],
+	"classPath": "src/",
+	"releasenote": "Initial Release",
+	"contributors": ["SomeRanDev"]
+}
