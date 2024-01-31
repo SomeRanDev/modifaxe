@@ -186,7 +186,7 @@ class ModParser {
 	public function nextInt(defaultValue: Int): Int {
 		final line = nextValueText();
 		if(line != null) {
-			return Std.parseInt(line);
+			return Std.parseInt(line) ?? defaultValue;
 		}
 		return defaultValue;
 	}
