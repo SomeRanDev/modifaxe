@@ -31,6 +31,32 @@ class ModParser {
 		return sys.io.File.getContent(filePath);
 	}
 
+	#if !modifaxe_parser_no_error_check
+	/**
+		Reports an parsing error.
+		Can be dynamically overwritten with custom error-reporting code.
+	**/
+	public #if modiflaxe_no_dynamic_functions dynamic #end function onError(error: ModParserError) {
+		final lineNumberStr = Std.string(line + 1);
+		var line1 = "".lpad(" ", lineNumberStr.length + 1) + " |";
+		var line2 = ' $lineNumberStr | ${content.substring(lineStart + 1, getEndOfCurrentLine())}';
+		var line3 = '$line1${"".lpad(" ", pos - lineStart)}^ ${error.getMessage()}';
+		Sys.println('[Modifaxe Parse Error]\n$line1\n$line2\n$line3');
+	}
+	#end
+
+	function getEndOfCurrentLine() {
+		var result = pos;
+		final len = content.length;
+		while(result < len) {
+			if(content.fastCodeAt(result) == 10) {
+				break;
+			}
+			result++;
+		}
+		return result;
+	}
+
 	/**
 		Gets the next value entry as a `String`.
 	**/
@@ -72,9 +98,11 @@ class ModParser {
 
 				// [ (open square bracket)
 				case 91: {
+					#if !modifaxe_parser_no_error_check
 					if(pos - lineStart > 0) {
-						// TODO: Error [ should be at start of line
+						onError(SectionShouldBeStartOfLine);
 					}
+					#end
 
 					// move past [
 					pos++;
@@ -129,7 +157,9 @@ class ModParser {
 				}
 
 				case _: {
-					// TODO: Error unexpected character c
+					#if !modifaxe_parser_no_error_check
+					onError(UnexpectedChar(c));
+					#end
 				}
 			}
 
@@ -223,7 +253,9 @@ class ModParser {
 			pos++;
 			return true;
 		}
-		// TODO: Error fromCharCode(char) expected
+		#if !modifaxe_parser_no_error_check
+		onError(ExpectedChar(91));
+		#end
 		return false;
 	}
 
@@ -235,7 +267,9 @@ class ModParser {
 	**/
 	inline function expectIdentifier(allowDot: Bool) {
 		if(!nextIdentifier(false)) {
-			// TODO: Error identifier expected
+			#if !modifaxe_parser_no_error_check
+			onError(ExpectedIdentifier);
+			#end
 		}
 	}
 
@@ -259,7 +293,9 @@ class ModParser {
 				expectChar(101); // e
 			}
 			case _: {
-				// TODO: Error true or false expected
+				#if !modifaxe_parser_no_error_check
+				onError(ExpectedBool);
+				#end
 			}
 		}
 	}
@@ -277,7 +313,9 @@ class ModParser {
 		if(c >= 48 && c <= 57) {
 			pos++;
 		} else {
-			// TODO: Error number expected
+			#if !modifaxe_parser_no_error_check
+			onError(ExpectedDigit);
+			#end
 		}
 
 		while(pos < len) {
