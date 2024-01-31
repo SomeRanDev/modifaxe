@@ -1,6 +1,6 @@
 <img src="https://github.com/SomeRanDev/modifaxe/blob/main/.github/logo.png" alt="WOOO been a while since I made a logo." width="400"/>
 
-[![Test Workflow](https://github.com/SomeRanDev/modifaxe/actions/workflows/test.yml/badge.svg)](https://github.com/SomeRanDev/modifaxe/actions)
+[![Test Workflow](https://github.com/SomeRanDev/modifaxe/actions/workflows/Test_DevEnv.yml/badge.svg)](https://github.com/SomeRanDev/modifaxe/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <a href=""><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Modifaxe Thread"/></a>
 
