@@ -1,0 +1,6 @@
+-cp ../src
+../extraParams.hxml
+
+-cp src
+-main Main
+-cpp bin

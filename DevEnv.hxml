@@ -1,0 +1,5 @@
+-D modifaxe_runtime
+--macro nullSafety("modifaxe")
+-cp src
+Modifaxe
+modifaxe
