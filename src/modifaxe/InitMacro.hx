@@ -34,14 +34,7 @@ function init() {
 				final loaderExpressions = Builder.extractLoaderExpressions();
 				final loadExpr = if(loaderExpressions.length > 0) {
 					macro {
-						final data = sys.io.File.getContent("data.modhx");
-
-						final lines = data.split("\n");
-						var index = 0;
-						
-						function nextLine() return lines[index++];
-						function nextInt() return Std.parseInt(nextLine());
-
+						final loader = new modifaxe.runtime.ModParser("data.modhx");
 						$b{loaderExpressions}
 					};
 				} else {

@@ -90,7 +90,7 @@ class Builder {
 	function addIntEntry(name: String, intString: String, originalExpression: Expr) {
 		currentEntries.push(new Entry(name, EInt(intString)));
 		addDataField(name, originalExpression);
-		loadExpressions.push(macro ModifaxeData.$name = nextInt());
+		loadExpressions.push(macro ModifaxeData.$name = loader.nextInt(0));
 	}
 
 	function addDataField(name: String, originalExpression: Expr) {
