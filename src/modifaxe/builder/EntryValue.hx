@@ -17,6 +17,15 @@ enum EntryValue {
 	The functions for `EntryValue`.
 **/
 class EntryValueFunctions {
+	public static function toTypeString(v: EntryValue) {
+		return switch(v) {
+			case EBool(_): "b";
+			case EInt(_): "i";
+			case EFloat(_): "f";
+			case EString(_): "s";
+		}
+	}
+
 	public static function toValueString(v: EntryValue) {
 		return switch(v) {
 			case EBool(value): value ? "true" : "false";

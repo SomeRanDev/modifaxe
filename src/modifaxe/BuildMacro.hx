@@ -10,6 +10,7 @@ import modifaxe.config.Meta;
 
 function build() {
 	final cls = #if macro Context.getLocalClass() #else null #end;
+	final clsName = cls != null ? cls.get().name : null;
 	final processAll = cls != null && cls.get().meta.has(Meta.Modifaxe);
 
 	final fields: Array<Field> = #if macro Context.getBuildFields() #else [] #end;
@@ -32,7 +33,7 @@ function build() {
 
 		switch(f.kind) {
 			case FFun(func) if(func.expr != null): {
-				final newExpr = builder.buildFunctionExpr(f.name, func.expr);
+				final newExpr = builder.buildFunctionExpr(cls != null ? cls.get() : null, f, func.expr);
 				if(newExpr != null) {
 					func.expr = newExpr;
 				}
@@ -41,9 +42,7 @@ function build() {
 		}
 	}
 
-	if(builder.hasSections()) {
-		trace(builder.generateModHxContent().toString());
-	}
+	builder.onFinishedBuilding();
 
 	return fields;
 }

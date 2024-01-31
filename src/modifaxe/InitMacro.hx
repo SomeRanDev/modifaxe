@@ -5,6 +5,7 @@ package modifaxe;
 import haxe.macro.Compiler;
 import haxe.macro.Context;
 
+import modifaxe.Output;
 import modifaxe.builder.Builder;
 
 function init() {
@@ -29,12 +30,13 @@ function init() {
 				}
 			}
 			case "ModifaxeLoader": {
+				Output.generateModHx();
 
 				// Generate the contents of `ModifaxeLoader.load`.
 				final loaderExpressions = Builder.extractLoaderExpressions();
 				final loadExpr = if(loaderExpressions.length > 0) {
 					macro {
-						final loader = new modifaxe.runtime.ModParser("data.modhx");
+						final loader = new modifaxe.runtime.ModParser($v{Output.getOutputPath()});
 						$b{loaderExpressions}
 					};
 				} else {

@@ -37,11 +37,15 @@ class ModParser {
 		Can be dynamically overwritten with custom error-reporting code.
 	**/
 	public #if modiflaxe_no_dynamic_functions dynamic #end function onError(error: ModParserError) {
+		// Print
 		final lineNumberStr = Std.string(line + 1);
 		var line1 = "".lpad(" ", lineNumberStr.length + 1) + " |";
-		var line2 = ' $lineNumberStr | ${content.substring(lineStart + 1, getEndOfCurrentLine())}';
-		var line3 = '$line1${"".lpad(" ", pos - lineStart)}^ ${error.getMessage()}';
+		var line2 = ' $lineNumberStr | ${content.substring(lineStart, getEndOfCurrentLine())}';
+		var line3 = '$line1${"".lpad(" ", pos - lineStart + 1)}^ ${error.getMessage()}';
 		Sys.println('[Modifaxe Parse Error]\n$line1\n$line2\n$line3');
+
+		// Skip to next line
+		pos = getEndOfCurrentLine();
 	}
 	#end
 
@@ -65,7 +69,6 @@ class ModParser {
 
 		var start = pos;
 		var end = pos;
-		var hasStarted = false;
 
 		while(pos < len) {
 			final c = content.fastCodeAt(pos);
@@ -73,22 +76,23 @@ class ModParser {
 				// \n (new line)
 				case 10: {
 					start = end = pos;
+					pos++;
 					line++;
 					lineStart = pos;
 				}
 
 				// whitespace (Based on `StringTools.isSpace`)
 				case 9 | 11 | 12 | 13 | 32: {
-					if(!hasStarted) {
-						start = pos;
-						end = pos;
-					}
+					start = pos;
+					end = pos;
+					pos++;
 				}
 
 				// # (pound sign)
 				case 35: {
 					if(goToNewLine()) {
 						// skip rest of loop so `pos` isn't incremented
+						pos++;
 						continue;
 					} else {
 						// break since end was hit
@@ -160,19 +164,12 @@ class ModParser {
 					#if !modifaxe_parser_no_error_check
 					onError(UnexpectedChar(c));
 					#end
+					pos++;
 				}
 			}
-
-			pos++;
 		}
 
-		return if(!hasStarted) {
-			// empty line; return `null`.
-			null;
-		} else {
-			// end of file, return what's left.
-			content.substring(start, end + 1);
-		}
+		return null;
 	}
 
 	public function nextBool(defaultValue: Bool): Bool {
@@ -287,7 +284,7 @@ class ModParser {
 		If not, return `false`.
 	**/
 	inline function expectIdentifier(allowDot: Bool) {
-		if(!nextIdentifier(false)) {
+		if(!nextIdentifier(allowDot)) {
 			#if !modifaxe_parser_no_error_check
 			onError(ExpectedIdentifier);
 			#end

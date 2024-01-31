@@ -3,6 +3,7 @@ package modifaxe.builder;
 #if (macro || modifaxe_runtime)
 
 import haxe.macro.Expr;
+import haxe.macro.Type;
 
 using haxe.macro.ExprTools;
 
@@ -13,6 +14,11 @@ using haxe.macro.ExprTools;
 **/
 class Builder {
 	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Statics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
+
+	/**
+		A list of `Builder` instances that have content.
+	**/
+	static var builders: Array<Builder> = [];
 
 	/**
 		An accumulated list of fields to generate on the singleton class that
@@ -27,6 +33,11 @@ class Builder {
 		something is wrong.
 	**/
 	static var hasExtractedFields: Bool = false;
+
+	/**
+		A list of expressions to call at the start of the runtime to parse the `.modhx`.
+	**/
+	static var loadExpressions: Array<Expr> = [];
 
 	/**
 		Getter for `dataFields` that can only run once.
@@ -44,9 +55,32 @@ class Builder {
 		return result;
 	}
 
-	static var loadExpressions: Array<Expr> = [];
+	/**
+		Getter for `loadExpressions`.
+	**/
 	public static function extractLoaderExpressions() {
 		return loadExpressions;
+	}
+
+	/**
+		Returns `true` if there are any `Builder` instances that require `.modhx` generation.
+	**/
+	public static function shouldGenerateModHx() {
+		return builders.length > 0;
+	}
+
+	/**
+		Generates the content for the `.modhx` file.
+		Must be called after all @:build macros have executed.
+	**/
+	public static function generateModHxContent(): String {
+		final buf = new StringBuf();
+
+		for(builder in builders) {
+			buf.add(builder.generateModHxSections());
+		}
+
+		return buf.toString();
 	}
 
 	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
@@ -59,15 +93,29 @@ class Builder {
 	public function new() {
 	}
 
+	public function onFinishedBuilding() {
+		if(hasSections()) {
+			builders.push(this);
+		}
+	}
+
+	/**
+		Returns `true` if there is at least one section to be generated.
+	**/
+	public function hasSections() {
+		return sections.length > 0;
+	}
+
 	/**
 		Returns a processed modified version of a function field's expression.
 		Returns `null` if no modifications were generated.
 	**/
-	public function buildFunctionExpr(fieldName: String, expr: Expr): Null<Expr> {
+	public function buildFunctionExpr(cls: Null<ClassType>, field: Field, expr: Expr): Null<Expr> {
 		final e = mapExpr(expr);
 
 		if(currentEntries.length > 0) {
-			sections.push(new Section(fieldName, currentEntries));
+			final sectionName = (cls != null ? '${cls.name}.' : "") + field.name;
+			sections.push(new Section(sectionName, currentEntries));
 			currentEntries = [];
 			return e;
 		}
@@ -135,16 +183,9 @@ class Builder {
 	}
 
 	/**
-		Returns `true` if there is at least one section to be generated.
-	**/
-	public function hasSections() {
-		return sections.length > 0;
-	}
-
-	/**
 		Generates this builder's `.modhx` content using its accumulated sections.
 	**/
-	public function generateModHxContent(): StringBuf {
+	public function generateModHxSections(): StringBuf {
 		final buf = new StringBuf();
 
 		for(section in sections) {

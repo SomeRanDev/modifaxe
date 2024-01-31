@@ -20,10 +20,13 @@ class Section {
 	public function generateModHxSection(): StringBuf {
 		final buf = new StringBuf();
 
+		buf.add("[");
 		buf.add(name);
-		buf.add(":\n");
+		buf.add("]\n");
 
 		for(entry in entries) {
+			buf.add(entry.value.toTypeString());
+			buf.add(".");
 			buf.add(entry.name);
 			buf.add(": ");
 			buf.add(entry.value.toValueString());

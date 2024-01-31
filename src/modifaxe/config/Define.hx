@@ -2,6 +2,21 @@ package modifaxe.config;
 
 enum abstract Define(String) from String to String {
 	/**
+		-D modifaxe_modhx_path=FILE_PATH
+
+		Configures the file path the `.modhx` is generated at.
+	**/
+	var ModHxPath = "modifaxe_modhx_path";
+
+	/**
+		-D modifaxe_use_relative_path
+
+		By default, the `.modhx` path injected into the code is the absolute path of the generated file.
+		If this is defined, the user-specified path will be used verbatim.
+	**/
+	var UseRelativePath = "modifaxe_use_relative_path";
+
+	/**
 		-D modifaxe_no_error_check
 
 		Disables error checking on `.modhx` parsing (improves performance).
