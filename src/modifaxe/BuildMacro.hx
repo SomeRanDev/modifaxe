@@ -18,7 +18,7 @@ function build() {
 
 	for(f in fields) {
 		var skip = !processAll;
-		if(skip) {
+		if(skip && f.meta != null) {
 			for(m in f.meta) {
 				if(m.name == Meta.Modifaxe) {
 					skip = false;
