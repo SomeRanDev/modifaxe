@@ -175,12 +175,33 @@ class ModParser {
 		}
 	}
 
-	public function nextInt(defaultValue: Int) {
+	public function nextBool(defaultValue: Bool): Bool {
+		final line = nextValueText();
+		if(line != null) {
+			return line == "true";
+		}
+		return defaultValue;
+	}
+
+	public function nextInt(defaultValue: Int): Int {
 		final line = nextValueText();
 		if(line != null) {
 			return Std.parseInt(line);
 		}
 		return defaultValue;
+	}
+
+	public function nextFloat(defaultValue: Float): Float {
+		final line = nextValueText();
+		if(line != null) {
+			return Std.parseFloat(line);
+		}
+		return defaultValue;
+	}
+
+	public function nextString(defaultValue: String) {
+		final line = nextValueText();
+		return line;
 	}
 
 	/**
@@ -330,7 +351,38 @@ class ModParser {
 	}
 
 	function expectFloat() {
-		expectInt(); // TODO write custom float parse
+		final len = content.length;
+
+		// Check if first character is - (minus)
+		if(content.fastCodeAt(pos) == 45) {
+			pos++;
+		}
+
+		// Check for at least one number
+		final c = content.fastCodeAt(pos);
+		if(c >= 48 && c <= 57) {
+			pos++;
+		} else {
+			#if !modifaxe_parser_no_error_check
+			onError(ExpectedDigit);
+			#end
+		}
+		trace(pos);
+
+		var processedDot = false;
+		while(pos < len) {
+			final c = content.fastCodeAt(pos);
+
+			// allow 0-9
+			if(c >= 48 && c <= 57) {
+				pos++;
+			} else if(!processedDot && c == 46) {
+				pos++;
+				processedDot = true;
+			} else {
+				break; // end once hit non-number character
+			}
+		}
 	}
 
 	function expectString() {

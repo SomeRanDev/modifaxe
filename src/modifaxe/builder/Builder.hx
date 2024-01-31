@@ -77,28 +77,49 @@ class Builder {
 
 	function mapExpr(expr: Expr): Expr {
 		return switch(expr.expr) {
+			case EConst(CIdent(id)) if(id == "true" || id == "false"): {
+				final name = "bool_" + (++index);
+				addBoolEntry(name, id == "true", expr);
+				macro ModifaxeData.$name;
+			}
 			case EConst(CInt(intString, _)): {
 				final name = "number_" + (++index);
 				addIntEntry(name, intString, expr);
-
+				macro ModifaxeData.$name;
+			}
+			case EConst(CFloat(floatString, _)): {
+				final name = "number_" + (++index);
+				addFloatEntry(name, floatString, expr);
 				macro ModifaxeData.$name;
 			}
 			case _: expr.map(mapExpr);
 		}
 	}
 
+	function addBoolEntry(name: String, boolean: Bool, originalExpression: Expr) {
+		currentEntries.push(new Entry(name, EBool(boolean)));
+		addDataField(name, macro : Bool, originalExpression);
+		loadExpressions.push(macro ModifaxeData.$name = loader.nextBool(false));
+	}
+
 	function addIntEntry(name: String, intString: String, originalExpression: Expr) {
 		currentEntries.push(new Entry(name, EInt(intString)));
-		addDataField(name, originalExpression);
+		addDataField(name, macro : Int, originalExpression);
 		loadExpressions.push(macro ModifaxeData.$name = loader.nextInt(0));
 	}
 
-	function addDataField(name: String, originalExpression: Expr) {
+	function addFloatEntry(name: String, intString: String, originalExpression: Expr) {
+		currentEntries.push(new Entry(name, EFloat(intString)));
+		addDataField(name, macro : Float, originalExpression);
+		loadExpressions.push(macro ModifaxeData.$name = loader.nextFloat(0.0));
+	}
+
+	function addDataField(name: String, complexType: ComplexType, originalExpression: Expr) {
 		dataFields.push({
 			name: name,
 			access: [APublic, AStatic],
 			pos: originalExpression.pos,
-			kind: FVar(macro : Int, originalExpression)
+			kind: FVar(complexType, originalExpression)
 		});
 	}
 
