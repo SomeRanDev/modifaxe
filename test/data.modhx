@@ -1,2 +1,3 @@
 [MyClass]
-f.return: 123.321
+s.return: "Re-written text. \\\\ \"backslash test\" // \nnew line 1
+new line 2"

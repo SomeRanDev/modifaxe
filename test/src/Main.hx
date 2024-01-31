@@ -6,6 +6,6 @@ function main() {
 }
 
 @:modifaxe
-function getValue(): Float {
-	return 44.4;
+function getValue(): String {
+	return "Hello world!";
 }

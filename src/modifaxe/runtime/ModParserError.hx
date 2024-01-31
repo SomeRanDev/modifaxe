@@ -12,6 +12,7 @@ enum ModParserError {
 	ExpectedDigit;
 
 	SectionShouldBeStartOfLine;
+	UnsupportedEscapeSequence;
 }
 
 class ModParserErrorFunctions {
@@ -23,6 +24,7 @@ class ModParserErrorFunctions {
 			case ExpectedBool: 'Expected true or false';
 			case ExpectedDigit: 'Expected number';
 			case SectionShouldBeStartOfLine: 'Section should start at the beginning of the line';
+			case UnsupportedEscapeSequence: 'Unsupported escape sequence';
 		}
 	}
 }

@@ -148,7 +148,7 @@ class ModParser {
 						case 0: expectBool();
 						case 1: expectInt();
 						case 2: expectFloat();
-						case 3: expectString();
+						case 3: return expectAndGetString(); // special case, String type returns itself
 					}
 
 					end = pos;
@@ -367,7 +367,6 @@ class ModParser {
 			onError(ExpectedDigit);
 			#end
 		}
-		trace(pos);
 
 		var processedDot = false;
 		while(pos < len) {
@@ -385,7 +384,61 @@ class ModParser {
 		}
 	}
 
-	function expectString() {
-		// TODO write string parse
+	function expectAndGetString() {
+		// move past "
+		expectChar(34);
+
+		final len = content.length;
+		final result = #if modifaxe_parser_use_string_concat "" #else new StringBuf() #end;
+		var start = pos;
+
+		while(pos < len) {
+			final c = content.fastCodeAt(pos);
+
+			switch(c) {
+				case 92 | 34: {
+					if(pos > start) {
+						#if modifaxe_parser_use_string_concat
+						result += content.substring(start, pos);
+						#else
+						result.add(content.substring(start, pos));
+						#end
+					}
+
+					if(c == 92 && (pos + 1) < len) {
+						// backslash \
+						final newChar = switch(content.fastCodeAt(pos + 1)) {
+							case 34: "\"";
+							case 92: "\\";
+							case 110: "\n";
+							case 116: "\t";
+							case _: {
+								#if !modifaxe_parser_no_error_check
+								onError(UnsupportedEscapeSequence);
+								#end
+								"";
+							}
+						}
+
+						#if modifaxe_parser_use_string_concat
+						result += newChar;
+						#else
+						result.add(newChar);
+						#end
+
+						pos++;
+						start = pos + 1; // increment `start` one more, since `pos++` at end of loop
+					} else {
+						// double-quote "
+						pos++;
+						break;
+					}
+				}
+			}
+
+			pos++;
+		}
+
+		return result.toString();
 	}
 }

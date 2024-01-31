@@ -92,6 +92,11 @@ class Builder {
 				addFloatEntry(name, floatString, expr);
 				macro ModifaxeData.$name;
 			}
+			case EConst(CString(floatString, DoubleQuotes)): {
+				final name = "string_" + (++index);
+				addStringEntry(name, floatString, expr);
+				macro ModifaxeData.$name;
+			}
 			case _: expr.map(mapExpr);
 		}
 	}
@@ -112,6 +117,12 @@ class Builder {
 		currentEntries.push(new Entry(name, EFloat(intString)));
 		addDataField(name, macro : Float, originalExpression);
 		loadExpressions.push(macro ModifaxeData.$name = loader.nextFloat(0.0));
+	}
+
+	function addStringEntry(name: String, intString: String, originalExpression: Expr) {
+		currentEntries.push(new Entry(name, EString(intString)));
+		addDataField(name, macro : String, originalExpression);
+		loadExpressions.push(macro ModifaxeData.$name = loader.nextString(""));
 	}
 
 	function addDataField(name: String, complexType: ComplexType, originalExpression: Expr) {
