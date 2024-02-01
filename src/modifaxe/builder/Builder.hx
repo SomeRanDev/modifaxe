@@ -11,7 +11,7 @@ import modifaxe.tools.ExprTools.ExprMapContext;
 import modifaxe.tools.ExprTools.mapWithContext;
 
 typedef ModifaxeState = {
-	modOnly: Null<Bool>
+	modOnly: Bool
 }
 
 /**
@@ -123,7 +123,7 @@ class Builder {
 	/**
 		Generates the default argument state.
 	**/
-	function getDefaultState() {
+	function getDefaultState(): ModifaxeState {
 		return {
 			modOnly: false
 		}
@@ -132,7 +132,7 @@ class Builder {
 	/**
 		The current state. This should be an accumulation of the previous states.
 	**/
-	function getState() {
+	function getState(): ModifaxeState {
 		return if(state.length == 0) {
 			getDefaultState();
 		} else {
@@ -144,7 +144,7 @@ class Builder {
 		Takes the arguments from the `@:modifaxe` metadata and applies it to the state stack.
 	**/
 	public function setArguments(args: Array<Expr>) {
-		final newState = Reflect.copy(getState()); // modify a copy of the current state
+		final newState: ModifaxeState = cast Reflect.copy(getState()); // modify a copy of the current state
 
 		for(arg in args) {
 			switch(arg) {
@@ -216,7 +216,7 @@ class Builder {
 	**/
 	function processConstant(expr: Expr, context: ExprMapContext, overrideName: Null<String> = null): Null<Expr> {
 		return switch(expr.expr) {
-			case EMeta({ name: _ == Meta.Mod => true, params: params }, innerExpr): {
+			case EMeta({ name: _ == Meta.Mod => true, params: params }, innerExpr) if(params != null): {
 				var newName = null;
 				for(p in params) {
 					switch(p.expr) {

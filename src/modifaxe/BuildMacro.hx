@@ -23,7 +23,7 @@ function build() {
 	var builder = null;
 	function pushArgs(args) {
 		if(builder == null) builder = new Builder();
-		builder.setArguments(args);
+		if(args != null) builder.setArguments(args);
 	}
 	function popArgs() builder.popArguments();
 
@@ -42,11 +42,13 @@ function build() {
 	for(f in fields) {
 		// Check for `@:modifaxe`
 		var hasMeta = false;
-		for(m in f.meta) {
-			if(m.name == Meta.Modifaxe) {
-				pushArgs(m.params);
-				hasMeta = true;
-				break;
+		if(f.meta != null) {
+			for(m in f.meta) {
+				if(m.name == Meta.Modifaxe) {
+					pushArgs(m.params);
+					hasMeta = true;
+					break;
+				}
 			}
 		}
 
