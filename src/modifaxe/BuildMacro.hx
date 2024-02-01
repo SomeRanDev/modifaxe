@@ -21,7 +21,7 @@ function build() {
 
 	// Create `Builder` if metadata arguments are supplied
 	var builder = null;
-	function pushArgs(args) {
+	function pushArgs(args: Null<Array<Expr>>) {
 		if(builder == null) builder = new Builder();
 		builder.setArguments(args ?? []);
 	}
