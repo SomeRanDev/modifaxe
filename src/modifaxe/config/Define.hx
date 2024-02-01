@@ -2,6 +2,9 @@ package modifaxe.config;
 
 #if (macro || modifaxe_runtime)
 
+/**
+	A list of all the defines in Modifaxe.
+**/
 enum abstract Define(String) from String to String {
 	/**
 		-D modifaxe_modhx_path=FILE_PATH

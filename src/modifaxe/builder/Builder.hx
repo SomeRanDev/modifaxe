@@ -2,11 +2,17 @@ package modifaxe.builder;
 
 #if (macro || modifaxe_runtime)
 
+import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+import modifaxe.config.Meta;
 import modifaxe.tools.ExprTools.ExprMapContext;
 import modifaxe.tools.ExprTools.mapWithContext;
+
+typedef ModifaxeState = {
+	modOnly: Null<Bool>
+}
 
 /**
 	This processes the AST and records the required entries for `.modhx`.
@@ -90,11 +96,17 @@ class Builder {
 	var currentEntries: Array<Entry> = [];
 	var sections: Array<Section> = [];
 
+	var state: Array<ModifaxeState> = [];
+
 	var index = 0;
 
 	public function new() {
 	}
 
+	/**
+		Call at the end of the `Builder`'s scope.
+		Adds the `Builder` to the global list if it has any entries.
+	**/
 	public function onFinishedBuilding() {
 		if(hasSections()) {
 			builders.push(this);
@@ -109,11 +121,60 @@ class Builder {
 	}
 
 	/**
+		Generates the default argument state.
+	**/
+	function getDefaultState() {
+		return {
+			modOnly: false
+		}
+	}
+
+	/**
+		The current state. This should be an accumulation of the previous states.
+	**/
+	function getState() {
+		return if(state.length == 0) {
+			getDefaultState();
+		} else {
+			state[state.length - 1];
+		}
+	}
+
+	/**
+		Takes the arguments from the `@:modifaxe` metadata and applies it to the state stack.
+	**/
+	public function setArguments(args: Array<Expr>) {
+		final newState = Reflect.copy(getState()); // modify a copy of the current state
+
+		for(arg in args) {
+			switch(arg) {
+				case macro ModOnly: {
+					newState.modOnly = true;
+				}
+				case _: {
+					#if macro
+					Context.error("Unknown argument.", arg.pos);
+					#end
+				}
+			}
+		}
+
+		state.push(newState);
+	}
+
+	/**
+		Pops the state of the `@:modifaxe` arguments.
+	**/
+	public function popArguments() {
+		state.pop();
+	}
+
+	/**
 		Returns a processed modified version of a function field's expression.
 		Returns `null` if no modifications were generated.
 	**/
 	public function buildFunctionExpr(cls: Null<ClassType>, field: Field, expr: Expr): Null<Expr> {
-		final e = mapExpr(expr, new ExprMapContext());
+		final e = (getState().modOnly ? mapExprModOnly : mapExpr)(expr, new ExprMapContext());
 
 		if(currentEntries.length > 0) {
 			final sectionName = (cls != null ? '${cls.name}.' : "") + field.name;
@@ -131,21 +192,57 @@ class Builder {
 		Redirects constants to their data holding variable and record them.
 	**/
 	function mapExpr(expr: Expr, context: ExprMapContext): Expr {
+		final result = processConstant(expr, context);
+		return result ?? mapWithContext(expr, context, mapExpr);
+	}
+
+	/**
+		Works the same as `mapExpr`, but used when `ModOnly` mode is enabled.
+	**/
+	function mapExprModOnly(expr: Expr, context: ExprMapContext): Expr {
+		final result = switch(expr.expr) {
+			case EMeta({ name: _ == Meta.Mod => true }, _): {
+				processConstant(expr, context);
+			}
+			case _: null;
+		}
+		return result ?? mapWithContext(expr, context, mapExprModOnly);
+	}
+
+	/**
+		Checks if the provided `Expr` is a constant that can be modified by Modifaxe.
+		If so, it is added as an entry and its replacement `Expr` is returned.
+		Returns `null` otherwise.
+	**/
+	function processConstant(expr: Expr, context: ExprMapContext, overrideName: Null<String> = null): Null<Expr> {
 		return switch(expr.expr) {
+			case EMeta({ name: _ == Meta.Mod => true, params: params }, innerExpr): {
+				var newName = null;
+				for(p in params) {
+					switch(p.expr) {
+						case EConst(CIdent(name) | CString(name, _)): {
+							newName = name;
+							break;
+						}
+						case _:
+					}
+				}
+				processConstant(innerExpr, context, newName);
+			}
 			case EConst(CIdent(id)) if(id == "true" || id == "false"): {
-				addEntry(0, id, expr, context);
+				addEntry(0, overrideName, id, expr, context);
 			}
 			case EConst(CInt(intString, _)): {
-				addEntry(1, intString, expr, context);
+				addEntry(1, overrideName, intString, expr, context);
 			}
 			case EConst(CFloat(floatString, _)): {
-				addEntry(2, floatString, expr, context);
+				addEntry(2, overrideName, floatString, expr, context);
 			}
 			case EConst(CString(string, DoubleQuotes)): {
-				addEntry(3, string, expr, context);
+				addEntry(3, overrideName, string, expr, context);
 			}
 			case _: {
-				mapWithContext(expr, context, mapExpr);
+				null;
 			}
 		}
 	}
@@ -153,8 +250,8 @@ class Builder {
 	/**
 		Adds an entry and returns its access expression.
 	**/
-	function addEntry(type: Int, content: String, expr: Expr, context: ExprMapContext) {
-		final name = context.generateName();
+	function addEntry(type: Int, name: Null<String>, content: String, expr: Expr, context: ExprMapContext) {
+		final name = name ?? context.generateName();
 		switch(type) {
 			case 0: addBoolEntry(name, content == "true", expr);
 			case 1: addIntEntry(name, content, expr);

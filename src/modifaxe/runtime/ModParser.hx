@@ -348,8 +348,6 @@ class ModParser {
 	}
 
 	function expectFloat() {
-		final len = content.length;
-
 		// Check if first character is - (minus)
 		if(content.fastCodeAt(pos) == 45) {
 			pos++;
@@ -365,6 +363,7 @@ class ModParser {
 			#end
 		}
 
+		final len = content.length;
 		var processedDot = false;
 		while(pos < len) {
 			final c = content.fastCodeAt(pos);
