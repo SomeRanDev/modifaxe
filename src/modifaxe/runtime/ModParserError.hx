@@ -2,6 +2,11 @@ package modifaxe.runtime;
 
 #if !modifaxe_parser_no_error_check
 
+/**
+	The error type for `ModParser`.
+
+	Every type of error can be represented with this enum.
+**/
 @:using(modifaxe.runtime.ModParserError.ModParserErrorFunctions)
 enum ModParserError {
 	UnexpectedChar(charCode: Int);
@@ -15,7 +20,13 @@ enum ModParserError {
 	UnsupportedEscapeSequence;
 }
 
+/**
+	Provides functions for `ModParserError`.
+**/
 class ModParserErrorFunctions {
+	/**
+		Returns the message the `ModParserError` should print.
+	**/
 	public static function getMessage(error: ModParserError) {
 		return switch(error) {
 			case UnexpectedChar(String.fromCharCode(_) => charString): 'Unexpected character $charString';

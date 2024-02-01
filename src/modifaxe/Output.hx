@@ -5,8 +5,6 @@ package modifaxe;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
-import modifaxe.builder.Builder;
-import modifaxe.builder.Entry;
 import modifaxe.builder.File;
 import modifaxe.builder.Section;
 import modifaxe.config.Define;
@@ -34,19 +32,6 @@ class Output {
 		will contain all the data at runtime.
 	**/
 	static var dataFields: Array<Field> = [];
-
-	// /**
-	// 	Tracks whether the data singleton fields have been accessed.
-
-	// 	If this is `true` while expressions are still being processed, that means
-	// 	something is wrong.
-	// **/
-	
-
-	// /**
-	// 	A list of expressions to call at the start of the runtime to parse the `.modhx`.
-	// **/
-	// static var loadExpressions: Array<Expr> = [];
 
 	/**
 		Getter for `dataFields` that can only run once.
@@ -99,25 +84,6 @@ class Output {
 		dataFields.push(field);
 	}
 
-	// public static function addLoadExpression(entry: Entry) {
-	// 	final assignTo = switch(entry.value) {
-	// 		case EBool(_): macro loader.nextBool(false);
-	// 		case EInt(_): macro loader.nextInt(0);
-	// 		case EFloat(_): macro loader.nextFloat(0.0);
-	// 		case EString(_): macro loader.nextString("");
-	// 	}
-
-	// 	final name = entry.name;
-	// 	//loadExpressions.push(macro ModifaxeData.$name = $assignTo);
-	// }
-
-	/**
-		Getter for `loadExpressions`.
-	**/
-	// public static function extractLoaderExpressions() {
-	// 	return loadExpressions;
-	// }
-
 	/**
 		Returns `true` if there are any `Builder` instances that require `.modhx` generation.
 	**/
@@ -159,12 +125,6 @@ class Output {
 		}
 
 		return path;
-	}
-
-	public static function generateModHx() {
-		// if(Builder.shouldGenerateModHx()) {
-		// 	sys.io.File.saveContent(getOutputPath(), Builder.generateModHxContent());
-		// }
 	}
 }
 

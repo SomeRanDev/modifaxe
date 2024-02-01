@@ -17,6 +17,9 @@ class ExprMapContext {
 	public function new() {
 	}
 
+	/**
+		Generates a name given the current context.
+	**/
 	public function generateName() {
 		if(nameStack.length > 0) {
 			return nameStack[nameStack.length - 1];
@@ -25,6 +28,10 @@ class ExprMapContext {
 		return "value";
 	}
 
+	/**
+		Pushes a name to the stack and returns itself.
+		Helpful for pushing a name and passing as an argument.
+	**/
 	public function named(name: String) {
 		nameStack.push(name);
 		return this;
@@ -67,6 +74,11 @@ private inline function arrMap(el: Array<Expr>, f: (Expr, Int) -> Expr): Array<E
 	return ret;
 }
 
+/**
+	Used internally in `mapWithContext`.
+
+	Generates a descriptive name for an expression used with a Binop.
+**/
 private function getBinopName(op: Binop, isRight: Bool) {
 	final opBaseName = Std.string(op).substring(2);
 
@@ -85,8 +97,6 @@ private function getBinopName(op: Binop, isRight: Bool) {
 	}
 
 	final base = switch(opBaseName) {
-		
-
 		case "Add": "Addition";
 		case "Sub": "Subtraction";
 		case "Mult": "Multiplication";
@@ -102,6 +112,10 @@ private function getBinopName(op: Binop, isRight: Bool) {
 
 	return (isRight ? "RightOf" : "LeftOf") + base;
 }
+
+/**
+	Used internally in `mapWithContext`.
+**/
 private inline function getUnopName(op: Unop) {
 	return Std.string(op).substring(2);
 }

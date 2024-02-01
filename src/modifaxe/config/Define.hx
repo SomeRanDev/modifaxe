@@ -27,7 +27,7 @@ enum abstract Define(String) from String to String {
 	/**
 		-D modifaxe_use_relative_path
 
-		By default, the `.modhx` path injected into the code is the absolute path of the generated file.
+		By default, the data file path injected into the code is the absolute path of the generated file.
 		If this is defined, the user-specified path will be used verbatim.
 	**/
 	var UseRelativePath = "modifaxe_use_relative_path";

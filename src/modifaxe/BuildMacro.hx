@@ -74,11 +74,6 @@ function build() {
 		}
 	}
 
-	// Finish building class
-	if(builder != null) {
-		builder.onFinishedBuilding();
-	}
-
 	return fields;
 }
 

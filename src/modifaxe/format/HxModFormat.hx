@@ -6,6 +6,9 @@ import haxe.macro.Expr;
 
 import modifaxe.builder.File;
 
+/**
+	The implementation of the `.modhx` file format.
+**/
 class HxModFormat extends Format {
 	/**
 		The file extension used by this format.

@@ -2,8 +2,6 @@ package modifaxe.config;
 
 #if (macro || modifaxe_runtime)
 
-import haxe.macro.Expr;
-
 /**
 	A list of all the argument that can be used in @:modifaxe.
 **/

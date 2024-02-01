@@ -6,7 +6,6 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
-import modifaxe.builder.File;
 import modifaxe.config.Meta;
 import modifaxe.format.FormatIdentifier;
 import modifaxe.tools.ExprTools.ExprMapContext;
@@ -19,38 +18,13 @@ typedef ModifaxeState = {
 }
 
 /**
-	This processes the AST and records the required entries for `.modhx`.
+	This processes the AST and records the required entries for the data file.
 
 	An instance of `Builder` is created for each `@:build` macro used to process a class.
 **/
 class Builder {
-	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Statics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
-
-	// /**
-	// 	A list of `Builder` instances that have content.
-	// **/
-	// static var builders: Array<Builder> = [];
-
-	/**
-		Generates the content for the `.modhx` file.
-		Must be called after all @:build macros have executed.
-	**/
-	// public static function generateModHxContent(): String {
-	// 	final buf = new StringBuf();
-
-	// 	for(builder in builders) {
-	// 		buf.add(builder.generateModHxSections());
-	// 		buf.addChar(10);
-	// 	}
-
-	// 	return buf.toString();
-	// }
-
-	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
-
 	var currentEntries: Array<Entry> = [];
 	var currentSection: Null<Section> = null;
-	//var files: Array<File> = [];
 
 	var state: Array<ModifaxeState> = [];
 
@@ -58,23 +32,6 @@ class Builder {
 
 	public function new() {
 	}
-
-	/**
-		Call at the end of the `Builder`'s scope.
-		Adds the `Builder` to the global list if it has any entries.
-	**/
-	public function onFinishedBuilding() {
-		// if(hasFiles()) {
-		// 	builders.push(this);
-		// }
-	}
-
-	// /**
-	// 	Returns `true` if there is at least one section to be generated.
-	// **/
-	// public function hasFiles() {
-	// 	return files.length > 0;
-	// }
 
 	/**
 		Generates the default argument state.
@@ -273,12 +230,9 @@ class Builder {
 		return macro ModifaxeData.$entryUniqueName;
 	}
 
-	// function addEntry(entry: Entry) {
-	// 	Output.addLoadExpression(entry);
-	// 	currentEntries.push(entry);
-	// 	return entry;
-	// }
-
+	/**
+		Adds a field to the runtime data class.
+	**/
 	function addDataField(name: String, complexType: ComplexType, originalExpression: Expr) {
 		Output.addDataField({
 			name: name,
@@ -287,22 +241,6 @@ class Builder {
 			kind: FVar(complexType, originalExpression)
 		});
 	}
-
-	/**
-		Generates this builder's `.modhx` content using its accumulated sections.
-	**/
-	// public function generateModHxSections(): StringBuf {
-	// 	final buf = new StringBuf();
-
-	// 	for(f in files) {
-	// 		for(section in @:privateAccess f.sections) {
-	// 			buf.add(section.generateModHxSection());
-	// 			buf.addChar(10);
-	// 		}
-	// 	}
-
-	// 	return buf;
-	// }
 }
 
 #end

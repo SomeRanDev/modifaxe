@@ -1,5 +1,5 @@
--cp ../src
-../extraParams.hxml
+-lib modifaxe
+-lib modifaxe.json
 
 -cp src
 -main Main

@@ -3,7 +3,7 @@ package modifaxe.builder;
 #if (macro || modifaxe_runtime)
 
 /**
-	Represents a `.modhx` entry.
+	Represents a modifiable entry.
 **/
 class Entry {
 	public var name(default, null): String;

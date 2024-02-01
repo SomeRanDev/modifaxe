@@ -49,6 +49,9 @@ class ModParser {
 	}
 	#end
 
+	/**
+		Returns the index of the next new line (\n) or end of file.
+	**/
 	function getEndOfCurrentLine() {
 		var result = pos;
 		final len = content.length;
@@ -172,6 +175,9 @@ class ModParser {
 		return null;
 	}
 
+	/**
+		Calls `getValueText` and parses it as a `Bool`.
+	**/
 	public function nextBool(defaultValue: Bool): Bool {
 		final line = nextValueText();
 		if(line != null) {
@@ -180,6 +186,9 @@ class ModParser {
 		return defaultValue;
 	}
 
+	/**
+		Calls `getValueText` and parses it as an `Int`.
+	**/
 	public function nextInt(defaultValue: Int): Int {
 		final line = nextValueText();
 		if(line != null) {
@@ -188,6 +197,9 @@ class ModParser {
 		return defaultValue;
 	}
 
+	/**
+		Calls `getValueText` and parses it as a `Float`.
+	**/
 	public function nextFloat(defaultValue: Float): Float {
 		final line = nextValueText();
 		if(line != null) {
@@ -196,6 +208,10 @@ class ModParser {
 		return defaultValue;
 	}
 
+	/**
+		Returns the value of `getValueText`.
+		This function doesn't do anything at the moment; it exists for consistency.
+	**/
 	public function nextString(defaultValue: String) {
 		final line = nextValueText();
 		return line;
@@ -318,6 +334,10 @@ class ModParser {
 		}
 	}
 
+	/**
+		Parse the next content under the assumption it is an `Int`.
+		Generate an error if anything unexpected occurs.
+	**/
 	function expectInt() {
 		final len = content.length;
 
@@ -347,6 +367,10 @@ class ModParser {
 		}
 	}
 
+	/**
+		Parse the next content under the assumption it is an `Float`.
+		Generate an error if anything unexpected occurs.
+	**/
 	function expectFloat() {
 		// Check if first character is - (minus)
 		if(content.fastCodeAt(pos) == 45) {
@@ -380,6 +404,10 @@ class ModParser {
 		}
 	}
 
+	/**
+		Parse the next content under the assumption it is an `String`.
+		If parsed successfully, the `String` is returned.
+	**/
 	function expectAndGetString() {
 		// move past "
 		expectChar(34);

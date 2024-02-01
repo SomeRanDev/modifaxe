@@ -18,6 +18,9 @@ abstract FormatIdentifier(String) from String {
 		this = id;
 	}
 
+	/**
+		Returns the `Format` this identifier is associated with.
+	**/
 	public function getFormat() {
 		final result = Format.formats.get(this);
 		if(result == null) {

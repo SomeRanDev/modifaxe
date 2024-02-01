@@ -3,7 +3,7 @@ package modifaxe.builder;
 #if (macro || modifaxe_runtime)
 
 /**
-	Represents a `.modhx` section.
+	Represents a section in a Modifaxe data file.
 **/
 class Section {
 	public var name(default, null): String;
@@ -34,28 +34,6 @@ class Section {
 	**/
 	public function identifierSafeName(): String {
 		return StringTools.replace(name, ".", "_");
-	}
-
-	/**
-		Generates this section's `.modhx` content using its accumulated entries.
-	**/
-	public function generateModHxSection(): StringBuf {
-		final buf = new StringBuf();
-
-		buf.add("[");
-		buf.add(name);
-		buf.add("]\n");
-
-		for(entry in entries) {
-			buf.add(entry.value.toTypeString());
-			buf.add(".");
-			buf.add(entry.name);
-			buf.add(": ");
-			buf.add(entry.value.toValueString());
-			buf.add("\n");
-		}
-
-		return buf;
 	}
 }
 
