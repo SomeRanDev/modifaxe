@@ -37,7 +37,6 @@ class Output {
 
 	public static function generateModHx() {
 		if(Builder.shouldGenerateModHx()) {
-			trace(getOutputPath(), Builder.generateModHxContent());
 			sys.io.File.saveContent(getOutputPath(), Builder.generateModHxContent());
 		}
 	}

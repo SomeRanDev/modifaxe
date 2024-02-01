@@ -1,3 +1,9 @@
 [Main_Fields_.getValue]
-s.string_1: "Bla blab la
-fdfdw!"
+s.Returned: "Hello world!"
+
+[Main_Fields_.getNumValue]
+i.LeftOfAddition: 777
+i.RightOfAddition: 321
+f.DividedBy: 0.5
+
+

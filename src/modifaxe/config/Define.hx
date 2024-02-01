@@ -1,5 +1,7 @@
 package modifaxe.config;
 
+#if (macro || modifaxe_runtime)
+
 enum abstract Define(String) from String to String {
 	/**
 		-D modifaxe_modhx_path=FILE_PATH
@@ -38,3 +40,5 @@ enum abstract Define(String) from String to String {
 	**/
 	var NoDynamicFunctions = "modiflaxe_no_dynamic_functions";
 }
+
+#end

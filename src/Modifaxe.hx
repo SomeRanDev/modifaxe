@@ -5,7 +5,5 @@ class Modifaxe {
 		#if macro
 		throw "This function should be called at runtime.";
 		#end
-
-		
 	}
 }

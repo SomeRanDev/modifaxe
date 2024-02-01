@@ -1,5 +1,7 @@
 package modifaxe.config;
 
+#if (macro || modifaxe_runtime)
+
 enum abstract Meta(String) from String to String {
 	/**
 		@:modifaxe
@@ -8,3 +10,5 @@ enum abstract Meta(String) from String to String {
 	**/
 	var Modifaxe = ":modifaxe";
 }
+
+#end

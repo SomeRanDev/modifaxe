@@ -205,6 +205,7 @@ class Builder {
 
 		for(section in sections) {
 			buf.add(section.generateModHxSection());
+			buf.addChar(10);
 		}
 
 		return buf;
