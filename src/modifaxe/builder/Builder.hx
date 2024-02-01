@@ -144,7 +144,9 @@ class Builder {
 		Takes the arguments from the `@:modifaxe` metadata and applies it to the state stack.
 	**/
 	public function setArguments(args: Array<Expr>) {
-		final newState: ModifaxeState = cast Reflect.copy(getState()); // modify a copy of the current state
+		final newState = Reflect.copy(getState()); // modify a copy of the current state
+
+		if(newState == null) throw "Reflect.copy failed."; // Required by null-safety, this can never happen.
 
 		for(arg in args) {
 			switch(arg) {
