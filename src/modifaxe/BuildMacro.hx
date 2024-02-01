@@ -23,7 +23,7 @@ function build() {
 	var builder = null;
 	function pushArgs(args) {
 		if(builder == null) builder = new Builder();
-		if(args != null) builder.setArguments(args);
+		builder.setArguments(args ?? []);
 	}
 	function popArgs() builder.popArguments();
 
