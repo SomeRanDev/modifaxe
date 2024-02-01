@@ -5,7 +5,8 @@ package modifaxe.builder;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
-using haxe.macro.ExprTools;
+import modifaxe.tools.ExprTools.ExprMapContext;
+import modifaxe.tools.ExprTools.mapWithContext;
 
 /**
 	This processes the AST and records the required entries for `.modhx`.
@@ -78,6 +79,7 @@ class Builder {
 
 		for(builder in builders) {
 			buf.add(builder.generateModHxSections());
+			buf.addChar(10);
 		}
 
 		return buf.toString();
@@ -111,7 +113,7 @@ class Builder {
 		Returns `null` if no modifications were generated.
 	**/
 	public function buildFunctionExpr(cls: Null<ClassType>, field: Field, expr: Expr): Null<Expr> {
-		final e = mapExpr(expr);
+		final e = mapExpr(expr, new ExprMapContext());
 
 		if(currentEntries.length > 0) {
 			final sectionName = (cls != null ? '${cls.name}.' : "") + field.name;
@@ -123,30 +125,43 @@ class Builder {
 		return null;
 	}
 
-	function mapExpr(expr: Expr): Expr {
+	/**
+		Processes an expression.
+
+		Redirects constants to their data holding variable and record them.
+	**/
+	function mapExpr(expr: Expr, context: ExprMapContext): Expr {
 		return switch(expr.expr) {
 			case EConst(CIdent(id)) if(id == "true" || id == "false"): {
-				final name = "bool_" + (++index);
-				addBoolEntry(name, id == "true", expr);
-				macro ModifaxeData.$name;
+				addEntry(0, id, expr, context);
 			}
 			case EConst(CInt(intString, _)): {
-				final name = "number_" + (++index);
-				addIntEntry(name, intString, expr);
-				macro ModifaxeData.$name;
+				addEntry(1, intString, expr, context);
 			}
 			case EConst(CFloat(floatString, _)): {
-				final name = "number_" + (++index);
-				addFloatEntry(name, floatString, expr);
-				macro ModifaxeData.$name;
+				addEntry(2, floatString, expr, context);
 			}
-			case EConst(CString(floatString, DoubleQuotes)): {
-				final name = "string_" + (++index);
-				addStringEntry(name, floatString, expr);
-				macro ModifaxeData.$name;
+			case EConst(CString(string, DoubleQuotes)): {
+				addEntry(3, string, expr, context);
 			}
-			case _: expr.map(mapExpr);
+			case _: {
+				mapWithContext(expr, context, mapExpr);
+			}
 		}
+	}
+
+	/**
+		Adds an entry and returns its access expression.
+	**/
+	function addEntry(type: Int, content: String, expr: Expr, context: ExprMapContext) {
+		final name = context.generateName();
+		switch(type) {
+			case 0: addBoolEntry(name, content == "true", expr);
+			case 1: addIntEntry(name, content, expr);
+			case 2: addFloatEntry(name, content, expr);
+			case 3: addStringEntry(name, content, expr);
+		}
+		return macro ModifaxeData.$name;
 	}
 
 	function addBoolEntry(name: String, boolean: Bool, originalExpression: Expr) {
