@@ -63,11 +63,11 @@ The `.modhx` is a text-based file format designed specifically for this project.
 &nbsp;
 
 ### Comments
-Lines that (excluding whitespace) start with pound sign (#) are comments and are ignored during parsing:
-```
+Content after a pound sign (#) is a comment and is ignored during parsing:
+```python
 # This is a comment.
 	# This is also a comment.
-Something # Invalid comment
+Something # Comment after content
 ```
 
 &nbsp;
@@ -76,12 +76,12 @@ Something # Invalid comment
 Entries are separated into sections. A section is a unique identifier followed by a colon.
 
 A list of values should follow with the `\t<type>.<name>=<value>` format:
-```
-My.Unique.ID:
-	b.trueOrFalse=true
-	i.myNum=123
-	f.floatNum=6.9
-	s.string="Insert valid Haxe string here.
+```haxe
+[My.Unique.ID]
+b.trueOrFalse=true
+i.myNum=123
+f.floatNum=6.9
+s.string="Insert valid Haxe string here.
 They can be multiline."
 ```
 
