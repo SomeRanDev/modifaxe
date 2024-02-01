@@ -8,8 +8,6 @@
 
 Change a value -> recompile -> test -> repeat. Every programmer has experienced this loop before; it's very tempting to "guess and check" when it comes to visually designing something with code. This library seeks to aliviate the tedious "recompile" step by allowing hardcoded values from your code to be modified AFTER compiling.
 
-**If you're reading this, you're here WAAAAAAAAAAAAAY too early. Nothing is implemented yet.**
-
 &nbsp;
 &nbsp;
 
@@ -75,7 +73,7 @@ Something # Invalid comment
 &nbsp;
 
 ### Sections and Values
-Entires are separated into sections. A section is a unique identifier followed by a colon.
+Entries are separated into sections. A section is a unique identifier followed by a colon.
 
 A list of values should follow with the `\t<type>.<name>=<value>` format:
 ```
