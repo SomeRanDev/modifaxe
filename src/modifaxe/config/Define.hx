@@ -7,11 +7,22 @@ package modifaxe.config;
 **/
 enum abstract Define(String) from String to String {
 	/**
-		-D modifaxe_modhx_path=FILE_PATH
+		-D modifaxe_default_file_path=FILE_PATH
 
-		Configures the file path the `.modhx` is generated at.
+		Default value: "data"
+
+		Configures the default file path the data file is generated at.
 	**/
-	var ModHxPath = "modifaxe_modhx_path";
+	var DefaultFilePath = "modifaxe_default_file_path";
+
+	/**
+		-D modifaxe_default_format=FORMAT_NAME
+
+		Default value: "modhx"
+
+		Configures the default format used by mod files.
+	**/
+	var DefaultFormat = "modifaxe_default_format";
 
 	/**
 		-D modifaxe_use_relative_path

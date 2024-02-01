@@ -26,6 +26,15 @@ class EntryValueFunctions {
 		}
 	}
 
+	public static function toTypeCharCode(v: EntryValue) {
+		return switch(v) {
+			case EBool(_): 98;
+			case EInt(_): 105;
+			case EFloat(_): 102;
+			case EString(_): 115;
+		}
+	}
+
 	public static function toValueString(v: EntryValue) {
 		return switch(v) {
 			case EBool(value): value ? "true" : "false";

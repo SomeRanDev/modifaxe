@@ -6,12 +6,16 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+import modifaxe.builder.File;
 import modifaxe.config.Meta;
+import modifaxe.format.FormatIdentifier;
 import modifaxe.tools.ExprTools.ExprMapContext;
 import modifaxe.tools.ExprTools.mapWithContext;
 
 typedef ModifaxeState = {
-	modOnly: Bool
+	modOnly: Bool,
+	file: Null<String>,
+	format: Null<FormatIdentifier>
 }
 
 /**
@@ -22,79 +26,31 @@ typedef ModifaxeState = {
 class Builder {
 	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Statics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
 
-	/**
-		A list of `Builder` instances that have content.
-	**/
-	static var builders: Array<Builder> = [];
-
-	/**
-		An accumulated list of fields to generate on the singleton class that
-		will contain all the data at runtime.
-	**/
-	static var dataFields: Array<Field> = [];
-
-	/**
-		Tracks whether the data singleton fields have been accessed.
-
-		If this is `true` while expressions are still being processed, that means
-		something is wrong.
-	**/
-	static var hasExtractedFields: Bool = false;
-
-	/**
-		A list of expressions to call at the start of the runtime to parse the `.modhx`.
-	**/
-	static var loadExpressions: Array<Expr> = [];
-
-	/**
-		Getter for `dataFields` that can only run once.
-		If it runs multiple times, that means something is wrong.
-	**/
-	public static function extractDataFields() {
-		if(hasExtractedFields) {
-			throw "Should not call this function more than once.";
-		} else {
-			hasExtractedFields = true;
-		}
-		
-		final result = dataFields;
-		dataFields = [];
-		return result;
-	}
-
-	/**
-		Getter for `loadExpressions`.
-	**/
-	public static function extractLoaderExpressions() {
-		return loadExpressions;
-	}
-
-	/**
-		Returns `true` if there are any `Builder` instances that require `.modhx` generation.
-	**/
-	public static function shouldGenerateModHx() {
-		return builders.length > 0;
-	}
+	// /**
+	// 	A list of `Builder` instances that have content.
+	// **/
+	// static var builders: Array<Builder> = [];
 
 	/**
 		Generates the content for the `.modhx` file.
 		Must be called after all @:build macros have executed.
 	**/
-	public static function generateModHxContent(): String {
-		final buf = new StringBuf();
+	// public static function generateModHxContent(): String {
+	// 	final buf = new StringBuf();
 
-		for(builder in builders) {
-			buf.add(builder.generateModHxSections());
-			buf.addChar(10);
-		}
+	// 	for(builder in builders) {
+	// 		buf.add(builder.generateModHxSections());
+	// 		buf.addChar(10);
+	// 	}
 
-		return buf.toString();
-	}
+	// 	return buf.toString();
+	// }
 
 	//~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~\\
 
 	var currentEntries: Array<Entry> = [];
-	var sections: Array<Section> = [];
+	var currentSection: Null<Section> = null;
+	//var files: Array<File> = [];
 
 	var state: Array<ModifaxeState> = [];
 
@@ -108,24 +64,26 @@ class Builder {
 		Adds the `Builder` to the global list if it has any entries.
 	**/
 	public function onFinishedBuilding() {
-		if(hasSections()) {
-			builders.push(this);
-		}
+		// if(hasFiles()) {
+		// 	builders.push(this);
+		// }
 	}
 
-	/**
-		Returns `true` if there is at least one section to be generated.
-	**/
-	public function hasSections() {
-		return sections.length > 0;
-	}
+	// /**
+	// 	Returns `true` if there is at least one section to be generated.
+	// **/
+	// public function hasFiles() {
+	// 	return files.length > 0;
+	// }
 
 	/**
 		Generates the default argument state.
 	**/
 	function getDefaultState(): ModifaxeState {
 		return {
-			modOnly: false
+			modOnly: false,
+			file: null,
+			format: null
 		}
 	}
 
@@ -153,6 +111,28 @@ class Builder {
 				case macro ModOnly: {
 					newState.modOnly = true;
 				}
+				case macro File=$path: {
+					final filePath = switch(path.expr) {
+						case EConst(CString(path, _)): path;
+						case _: {
+							#if macro
+							Context.error("The 'File' value should be a String expression.", arg.pos);
+							#else null; #end
+						}
+					}
+					newState.file = filePath != null && filePath.length == 0 ? null : filePath;
+				}
+				case macro Format=$formatName: {
+					final formatIdent = switch(formatName.expr) {
+						case EConst(CString(name, _) | CIdent(name)): name;
+						case _: {
+							#if macro
+							Context.error("The 'Format' value should be an identifier or String expression.", arg.pos);
+							#else null; #end
+						}
+					}
+					newState.format = formatIdent != null && formatIdent.length == 0 ? null : formatIdent;
+				}
 				case _: {
 					#if macro
 					Context.error("Unknown argument.", arg.pos);
@@ -176,12 +156,15 @@ class Builder {
 		Returns `null` if no modifications were generated.
 	**/
 	public function buildFunctionExpr(cls: Null<ClassType>, field: Field, expr: Expr): Null<Expr> {
-		final e = (getState().modOnly ? mapExprModOnly : mapExpr)(expr, new ExprMapContext());
+		final sectionName = (cls != null ? '${cls.name}.' : "") + field.name;
+		currentSection = new Section(sectionName);
 
-		if(currentEntries.length > 0) {
-			final sectionName = (cls != null ? '${cls.name}.' : "") + field.name;
-			sections.push(new Section(sectionName, currentEntries));
-			currentEntries = [];
+		final state = getState();
+		final e = (state.modOnly ? mapExprModOnly : mapExpr)(expr, new ExprMapContext());
+
+		if(currentSection.hasEntries()) {
+			Output.addSectionToFile(currentSection, state.format, state.file);
+			currentSection = null;
 			return e;
 		}
 
@@ -232,16 +215,16 @@ class Builder {
 				processConstant(innerExpr, context, newName);
 			}
 			case EConst(CIdent(id)) if(id == "true" || id == "false"): {
-				addEntry(0, overrideName, id, expr, context);
+				makeEntry(0, overrideName, id, expr, context);
 			}
 			case EConst(CInt(intString, _)): {
-				addEntry(1, overrideName, intString, expr, context);
+				makeEntry(1, overrideName, intString, expr, context);
 			}
 			case EConst(CFloat(floatString, _)): {
-				addEntry(2, overrideName, floatString, expr, context);
+				makeEntry(2, overrideName, floatString, expr, context);
 			}
 			case EConst(CString(string, DoubleQuotes)): {
-				addEntry(3, overrideName, string, expr, context);
+				makeEntry(3, overrideName, string, expr, context);
 			}
 			case _: {
 				null;
@@ -252,43 +235,52 @@ class Builder {
 	/**
 		Adds an entry and returns its access expression.
 	**/
-	function addEntry(type: Int, name: Null<String>, content: String, expr: Expr, context: ExprMapContext) {
-		final name = name ?? context.generateName();
-		switch(type) {
-			case 0: addBoolEntry(name, content == "true", expr);
-			case 1: addIntEntry(name, content, expr);
-			case 2: addFloatEntry(name, content, expr);
-			case 3: addStringEntry(name, content, expr);
+	function makeEntry(type: Int, name: Null<String>, content: String, expr: Expr, context: ExprMapContext) {
+		if(currentSection == null) {
+			throw "Cannot create entries without section.";
 		}
-		return macro ModifaxeData.$name;
+
+		final name = name ?? context.generateName();
+
+		var complexType = null;
+		var entryValue: EntryValue;
+
+		switch(type) {
+			case 0: {
+				complexType = macro : Bool;
+				entryValue = EBool(content == "true");
+			}
+			case 1: {
+				complexType = macro : Int;
+				entryValue = EInt(content);
+			}
+			case 2: {
+				complexType = macro : Float;
+				entryValue = EFloat(content);
+			}
+			case 3: {
+				complexType = macro : String;
+				entryValue = EString(content);
+			}
+			case _: throw "Invalid type id.";
+		}
+
+		final entry = currentSection.addEntry(name, entryValue);
+		final entryUniqueName = entry.getUniqueName();
+
+		addDataField(entry.getUniqueName(), complexType, expr);
+
+		return macro ModifaxeData.$entryUniqueName;
 	}
 
-	function addBoolEntry(name: String, boolean: Bool, originalExpression: Expr) {
-		currentEntries.push(new Entry(name, EBool(boolean)));
-		addDataField(name, macro : Bool, originalExpression);
-		loadExpressions.push(macro ModifaxeData.$name = loader.nextBool(false));
-	}
-
-	function addIntEntry(name: String, intString: String, originalExpression: Expr) {
-		currentEntries.push(new Entry(name, EInt(intString)));
-		addDataField(name, macro : Int, originalExpression);
-		loadExpressions.push(macro ModifaxeData.$name = loader.nextInt(0));
-	}
-
-	function addFloatEntry(name: String, intString: String, originalExpression: Expr) {
-		currentEntries.push(new Entry(name, EFloat(intString)));
-		addDataField(name, macro : Float, originalExpression);
-		loadExpressions.push(macro ModifaxeData.$name = loader.nextFloat(0.0));
-	}
-
-	function addStringEntry(name: String, intString: String, originalExpression: Expr) {
-		currentEntries.push(new Entry(name, EString(intString)));
-		addDataField(name, macro : String, originalExpression);
-		loadExpressions.push(macro ModifaxeData.$name = loader.nextString(""));
-	}
+	// function addEntry(entry: Entry) {
+	// 	Output.addLoadExpression(entry);
+	// 	currentEntries.push(entry);
+	// 	return entry;
+	// }
 
 	function addDataField(name: String, complexType: ComplexType, originalExpression: Expr) {
-		dataFields.push({
+		Output.addDataField({
 			name: name,
 			access: [APublic, AStatic],
 			pos: originalExpression.pos,
@@ -299,16 +291,18 @@ class Builder {
 	/**
 		Generates this builder's `.modhx` content using its accumulated sections.
 	**/
-	public function generateModHxSections(): StringBuf {
-		final buf = new StringBuf();
+	// public function generateModHxSections(): StringBuf {
+	// 	final buf = new StringBuf();
 
-		for(section in sections) {
-			buf.add(section.generateModHxSection());
-			buf.addChar(10);
-		}
+	// 	for(f in files) {
+	// 		for(section in @:privateAccess f.sections) {
+	// 			buf.add(section.generateModHxSection());
+	// 			buf.addChar(10);
+	// 		}
+	// 	}
 
-		return buf;
-	}
+	// 	return buf;
+	// }
 }
 
 #end
