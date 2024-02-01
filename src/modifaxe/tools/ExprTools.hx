@@ -54,7 +54,7 @@ class ExprMapContext {
 /**
 	Used internally in `mapWithContext`.
 **/
-private inline function opt(e: Null<Expr>, role: Null<String>, f: (Expr, String) -> Expr): Expr {
+private inline function opt(e: Null<Expr>, role: Null<String>, f: (Expr, Null<String>) -> Expr): Null<Expr> {
 	return e == null ? null : f(e, role);
 }
 
@@ -189,7 +189,7 @@ function mapWithContext(e: Expr, context: ExprMapContext, callback: (Expr, ExprM
 					args: ret,
 					ret: func.ret,
 					params: func.params,
-					expr: f(func.expr, null)
+					expr: opt(func.expr, null, f)
 				});
 			case EMeta(m, e): EMeta(m, f(e, null));
 		}
