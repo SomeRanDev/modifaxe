@@ -7,7 +7,7 @@ package modifaxe.format;
 
 	Validates a format exists upon creation.
 **/
-abstract FormatIdentifier(String) from String {
+abstract FormatIdentifier(String) {
 	public function new(id: String) {
 		id = id.toLowerCase();
 
@@ -27,6 +27,14 @@ abstract FormatIdentifier(String) from String {
 			throw 'Could not locate format "$this".';
 		}
 		return result;
+	}
+
+	/**
+		Handles conversion from `String`.
+	**/
+	@:from
+	public static function fromString(s: String) {
+		return new FormatIdentifier(s);
 	}
 }
 
