@@ -197,7 +197,7 @@ class Output {
 		}
 
 		return [
-			for(ident in [defaultCase].concat(identifiers)) {
+			for(ident in [(defaultCase : { name: String, expr: Expr })].concat(identifiers)) {
 				{ values: [#if macro macro $v{ident.name} #end], expr: ident.expr }
 			}
 		];

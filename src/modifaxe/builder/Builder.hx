@@ -4,6 +4,7 @@ package modifaxe.builder;
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.PositionTools;
 import haxe.macro.Type;
 
 import modifaxe.config.Meta;
@@ -249,15 +250,7 @@ class Builder {
 			throw "Cannot create entries without section.";
 		}
 
-		var name = name ?? context.generateName();
-
-		// Ensure name is unique
-		if(currentNames.exists(name)) {
-			name += "_Line" + haxe.macro.PositionTools.toLocation(expr.pos).range.start.line;
-		}
-		while(currentNames.exists(name)) {
-			name += "_";
-		}
+		final name = ensureUniqueName(name ?? context.generateName(), expr.pos);
 		currentNames.set(name, true);
 
 		var complexType;
@@ -293,6 +286,16 @@ class Builder {
 		addDataField(entry.getUniqueName(), complexType, expr);
 
 		return macro ModifaxeData.$entryUniqueName;
+	}
+
+	function ensureUniqueName(name: String, expressionPos: Position) {
+		if(currentNames.exists(name)) {
+			name += "_Line" + #if macro PositionTools.toLocation(expressionPos).range.start.line #else 0 #end;
+		}
+		while(currentNames.exists(name)) {
+			name += "_";
+		}
+		return name;
 	}
 
 	/**
