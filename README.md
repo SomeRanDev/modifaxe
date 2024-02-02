@@ -67,7 +67,7 @@ i.return: 800
 &nbsp;
 &nbsp;
 
-## Configuration
+## Metadata Configuration
 
 The `@:mod` metadata can be placed on expressions to specify their name.
 ```haxe
@@ -90,10 +90,46 @@ function getWindowSize() {
 ```
 
 &nbsp;
+
+The `File` argument can be used to specify the filename the entries under a metadata will be placed in. Multiple data files can be generated/loaded from this way:
+```haxe
+// Generates data1.modhx file containing one entry
+@:modifaxe(File="data1")
+function getWindowWidth() { return 800; }
+
+// Generates data2.modhx file that also contains this one entry
+@:modifaxe(File="data2")
+function getWindowHeight() { return 400; }
+```
+
+&nbsp;
+
+The `Format` argument can be used to set the format of the file entries are placed into. By default, Modifaxe only has one format supported, `modhx`. However, it is possible for other libraries to add their own formats. Check out the [Modifaxe/JSON](https://github.com/SomeRanDev/modifaxe.JSON) library to see an example of this!
+
+If Modifaxe/JSON is installed, a `.json` format can be used like so:
+```haxe
+// Generates and loads the data in a modifiable .json file
+@:modifaxe(Format=Json)
+function getWindowWidth() {
+	return 800;
+}
+```
+
+&nbsp;
 &nbsp;
 &nbsp;
 
 ## Defines
+
+To specify a specific path this library works on (instead of using a global `@:build` macro which could be slower), the `-D modifaxe_path_filter` define can be used:
+```hxml
+-D modifaxe_path_filter=my_package
+```
+
+To set the default filename for the generated data file, the `-D modifaxe_default_file_path` define can be used (the extension is added automatically):
+```hxml
+-D modifaxe_default_file_path=my_data_file
+```
 
 You can view a list of all the `-D` defines you can use to configure the library [here](https://github.com/SomeRanDev/modifaxe/blob/main/src/modifaxe/config/Define.hx).
 
