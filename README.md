@@ -16,6 +16,8 @@ Change a value -> recompile -> test -> repeat. Every programmer has experienced 
 | Topic | Description |
 | --- | --- |
 | [Installation](#installation) | How to install this library into your project. |
+| [Configuration](#configuration) | How to configure the metadata. |
+| [Defines](#defines) | A list of defines to set the library preferences. |
 | [.modhx Format](#modhx-format) | An explanation of the `.modhx` format. |
 
 &nbsp;
@@ -49,9 +51,43 @@ Compile your Haxe project to a `sys` target with file-system access.
 
 Modify the value(s) in the generated `values.modhx` file:
 ```
-Main.getWindowSize:
-	i.return=800
+[Main.getWindowSize]
+i.return: 800
 ```
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+## Configuration
+
+The `@:mod` metadata can be placed on expressions to specify their name.
+```haxe
+@:modifaxe
+function getWindowSize() {
+	return @:mod("my_num") 800;
+}
+```
+```
+[Main.getWindowSize]
+i.my_num: 800
+```
+
+To only use constants that have the `@:mod` metadata, the `ModOnly` argument can be used:
+```haxe
+@:modifaxe(ModOnly)
+function getWindowSize() {
+	return @:mod("my_num") 800 + 100;
+}
+```
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+## Defines
+
+You can view a list of all the `-D` defines you can use to configure the library [here](https://github.com/SomeRanDev/modifaxe/blob/main/src/modifaxe/config/Define.hx).
 
 &nbsp;
 &nbsp;
