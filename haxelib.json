@@ -1,6 +1,6 @@
 {
 	"name": "modifaxe",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"description": "A tool for modifying hardcoded values after compiling.",
 	"url": "https://github.com/SomeRanDev/modifaxe",
 	"license": "MIT",
