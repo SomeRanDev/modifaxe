@@ -16,8 +16,8 @@ Change a value -> recompile -> test -> repeat. Every programmer has experienced 
 | Topic | Description |
 | --- | --- |
 | [Installation](#installation) | How to install this library into your project. |
-| [Configuration](#configuration) | How to configure the metadata. |
-| [Defines](#defines) | A list of defines to set the library preferences. |
+| [Metadata Configuration](#metadata-configuration) | How to configure the metadata. |
+| [Define Configuration](#defines) | A list of defines to set the library preferences. |
 | [.modhx Format](#modhx-format) | An explanation of the `.modhx` format. |
 
 &nbsp;
