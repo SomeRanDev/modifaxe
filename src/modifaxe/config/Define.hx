@@ -25,6 +25,19 @@ enum abstract Define(String) from String to String {
 	var DefaultFormat = "modifaxe_default_format";
 
 	/**
+		-D modifaxe_path_filter=PATH
+
+		Default value: ""
+
+		The path filter applied to the `addGlobalMetadata` function that sets up the
+		`@:build` macro. Use this to optimize the build macro to only check in a
+		specific package or module.
+
+		Use `--macro Modifaxe.addPath(pathFilter)` to add an additional path.
+	**/
+	var PathFilter = "modifaxe_path_filter";
+
+	/**
 		-D modifaxe_dont_delete_old_files
 
 		If defined, old data files will not be deleted and the `.modifaxe` tracking file will

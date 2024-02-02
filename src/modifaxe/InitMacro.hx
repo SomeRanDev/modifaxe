@@ -7,7 +7,7 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 
 import modifaxe.Output;
-import modifaxe.builder.Builder;
+import modifaxe.config.Define;
 import modifaxe.format.Format;
 import modifaxe.format.HxModFormat;
 
@@ -19,11 +19,11 @@ function init() {
 		return;
 	}
 
-	// Apply our @:build macro where it's needed
-	Compiler.addGlobalMetadata("", "@:build(modifaxe.BuildMacro.build())");
-
 	// Register the `.modhx` format
 	Format.registerFormat("modhx", new HxModFormat());
+
+	// Apply `@:build` meta to path filter
+	Modifaxe.addPath(Context.definedValue(Define.PathFilter) ?? "");
 
 	// Special technique to generate code post-@:build macros
 	// Hope this is okay???
