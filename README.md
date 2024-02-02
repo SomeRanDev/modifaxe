@@ -47,10 +47,18 @@ function getWindowSize() {
 }
 ```
 
+Run `ModifaxeLoader.load()` at the start of your program:
+```haxe
+function main() {
+	ModifaxeLoader.load();
+	// ...
+}
+```
+
 Compile your Haxe project to a `sys` target with file-system access.
 
 Modify the value(s) in the generated `values.modhx` file:
-```
+```haxe
 [Main.getWindowSize]
 i.return: 800
 ```
@@ -68,7 +76,7 @@ function getWindowSize() {
 	return @:mod("my_num") 800;
 }
 ```
-```
+```haxe
 [Main.getWindowSize]
 i.my_num: 800
 ```
