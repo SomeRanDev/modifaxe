@@ -73,9 +73,13 @@ function makeModifaxeLoader(): TypeDefinition {
 	}
 
 	// Generate TypeDefinition
-	return macro class ModifaxeLoader {
+	final result = macro class ModifaxeLoader {
 		public static function load() $loadExpr;
 	}
+
+	Output.trackAndDeleteOldFiles();
+
+	return result;
 }
 
 #end

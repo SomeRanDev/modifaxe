@@ -34,6 +34,12 @@ class Output {
 	static var dataFields: Array<Field> = [];
 
 	/**
+		A list of all saved files.
+		Used to determine if there's any old files that need to be deleted.
+	**/
+	static var savedFiles: Array<String> = [];
+
+	/**
 		Getter for `dataFields` that can only run once.
 		If it runs multiple times, that means something is wrong.
 	**/
@@ -125,6 +131,65 @@ class Output {
 		}
 
 		return path;
+	}
+
+	/**
+		A wrapper for `sys.io.File.saveContent`.
+		Tracks the file so it can be deleted later if necessary.
+	**/
+	public static function saveContent(path: String, content: String) {
+		savedFiles.push(path);
+		sys.io.File.saveContent(path, content);
+	}
+
+	/**
+		A wrapper for `sys.io.File.saveBytes`.
+		Tracks the file so it can be deleted later if necessary.
+	**/
+	public static function saveBytes(path: String, bytes: haxe.io.Bytes) {
+		savedFiles.push(path);
+		sys.io.File.saveBytes(path, bytes);
+	}
+
+	/**
+		Called at the end of Modifaxe.
+		Checks if there are any old files that weren't regenerated and deletes them.
+		This function can be disabled with `-D modifaxe_dont_delete_old_files`.
+	**/
+	public static function trackAndDeleteOldFiles() {
+		#if macro
+		if(Context.defined(Define.DontDeleteOldFiles)) {
+			return;
+		}
+		#end
+
+		final modifaxeTrackerFilename = #if macro Context.definedValue(Define.OldFileTrackerName) ?? #end ".modifaxe";
+		final oldFileList = if(sys.FileSystem.exists(modifaxeTrackerFilename)) {
+			final content = sys.io.File.getContent(modifaxeTrackerFilename);
+			content.split("\n").filter(p -> StringTools.trim(p).length > 0);
+		} else {
+			[];
+		}
+
+		final toBeDeleted = [];
+		final newFiles = [];
+
+		for(file in savedFiles) {
+			final absolutePath = sys.FileSystem.absolutePath(file);
+			newFiles.push(absolutePath);
+		}
+
+		for(oldFile in oldFileList) {
+			if(!newFiles.contains(oldFile)) {
+				toBeDeleted.push(oldFile);
+			}
+		}
+
+		for(oldFile in toBeDeleted) {
+			sys.FileSystem.deleteFile(oldFile);
+		}
+
+		sys.io.File.saveContent(modifaxeTrackerFilename, newFiles.join("\n"));
 	}
 }
 

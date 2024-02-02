@@ -11,7 +11,7 @@ function getValue(): String {
 	return "Hello world!";
 }
 
-@:modifaxe(File="Something")
+@:modifaxe
 function getNumValue() {
 	final calculate = 123 + @:mod(lefthing) 321;
 	return calculate / 0.5;

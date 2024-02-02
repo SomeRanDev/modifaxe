@@ -41,7 +41,7 @@ class HxModFormat extends Format {
 				buf.addChar(10); // \n
 			}
 
-			sys.io.File.saveContent(file.getPath(extension), buf.toString());
+			Output.saveContent(file.getPath(extension), buf.toString());
 		}
 	}
 

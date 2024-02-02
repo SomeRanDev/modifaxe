@@ -41,7 +41,8 @@ abstract class Format {
 		Once all `@:build` macros have run, this is called to save the accumulated `File`
 		objects in your desired format.
 
-		Simply use `sys.io.File` `saveContent` or `saveBytes` to save the file.
+		Simply use `modifaxe.Output` `saveContent` or `saveBytes` to save the file.
+		(If you use `sys.io.File` directly, Modifaxe can't track and delete old files).
 	**/
 	public abstract function saveModFiles(files: Array<File>): Void;
 

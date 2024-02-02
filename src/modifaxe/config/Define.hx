@@ -25,6 +25,23 @@ enum abstract Define(String) from String to String {
 	var DefaultFormat = "modifaxe_default_format";
 
 	/**
+		-D modifaxe_dont_delete_old_files
+
+		If defined, old data files will not be deleted and the `.modifaxe` tracking file will
+		not be generated.
+	**/
+	var DontDeleteOldFiles = "modifaxe_dont_delete_old_files";
+
+	/**
+		-D modifaxe_old_file_tracker_name=FILE_PATH
+
+		Default value: ".modifaxe"
+
+		This is the name and path of the file that stores a list of generated files.
+	**/
+	var OldFileTrackerName = "modifaxe_old_file_tracker_name";
+
+	/**
 		-D modifaxe_use_relative_path
 
 		By default, the data file path injected into the code is the absolute path of the generated file.
