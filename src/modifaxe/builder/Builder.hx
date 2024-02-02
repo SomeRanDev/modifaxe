@@ -88,7 +88,9 @@ class Builder {
 							#else null; #end
 						}
 					}
-					newState.format = formatIdent != null && formatIdent.length == 0 ? null : formatIdent;
+					if(formatIdent != null && formatIdent.length > 0) {
+						newState.format = formatIdent;
+					}
 				}
 				case _: {
 					#if macro

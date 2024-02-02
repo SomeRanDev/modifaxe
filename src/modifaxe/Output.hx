@@ -67,6 +67,8 @@ class Output {
 		// Use default format if `null`
 		format ??= #if macro Context.definedValue(Define.DefaultFormat) ?? #end "modhx";
 
+		if(filePath == null || format == null) return;
+
 		if(!files.exists(format)) {
 			files.set(format, []);
 		}
