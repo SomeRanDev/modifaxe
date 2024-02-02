@@ -2,7 +2,7 @@
 
 [![Test Workflow](https://github.com/SomeRanDev/modifaxe/actions/workflows/Test_DevEnv.yml/badge.svg)](https://github.com/SomeRanDev/modifaxe/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<a href=""><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Modifaxe Thread"/></a>
+<a href="https://discord.com/channels/162395145352904705/1202862068961910794/"><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Modifaxe Thread"/></a>
 
 *A tool for modifying hardcoded values in your post-build Haxe application.*
 
