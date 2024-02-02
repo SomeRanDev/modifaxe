@@ -155,7 +155,7 @@ Something # Comment after content
 ### Sections and Values
 Entries are separated into sections. A section is a unique identifier followed by a colon.
 
-A list of values should follow with the `\t<type>.<name>=<value>` format:
+A list of values should follow with the `<type>.<name>: <value>` format:
 ```haxe
 [My.Unique.ID]
 b.trueOrFalse=true
