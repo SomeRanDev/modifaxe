@@ -121,13 +121,14 @@ class ModParser {
 					expectChar(93);
 				}
 
-				// b, i, f, or s for the type
-				case 98 | 105 | 102 | 115: {
+				// b, i, f, s, or e for the type
+				case 98 | 105 | 102 | 115 | 101: {
 					final type = switch(c) {
 						case 98: 0; // bool
 						case 105: 1; // int
 						case 102: 2; // float
 						case 115: 3; // string
+						case 101: 4; // enum
 						case _: 0; // impossible
 					}
 
@@ -156,6 +157,7 @@ class ModParser {
 						case 1: expectInt();
 						case 2: expectFloat();
 						case 3: return expectAndGetString(); // special case, String type returns itself
+						case 4: expectIdentifier(false);
 					}
 
 					end = pos;
@@ -213,6 +215,15 @@ class ModParser {
 		This function doesn't do anything at the moment; it exists for consistency.
 	**/
 	public function nextString(defaultValue: String) {
+		final line = nextValueText();
+		return line;
+	}
+
+	/**
+		Returns the value of `getValueText`.
+		This function doesn't do anything at the moment; it exists for consistency.
+	**/
+	public function nextEnumIdentifier(defaultValue: String) {
 		final line = nextValueText();
 		return line;
 	}

@@ -77,6 +77,10 @@ function makeModifaxeLoader(): TypeDefinition {
 		public static function load() $loadExpr;
 	}
 
+	for(field in Output.getLoaderFields()) {
+		result.fields.push(field);
+	}
+
 	Output.trackAndDeleteOldFiles();
 
 	return result;

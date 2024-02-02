@@ -4,6 +4,8 @@ package modifaxe;
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.MacroStringTools;
+import haxe.macro.Type;
 
 import modifaxe.builder.File;
 import modifaxe.builder.Section;
@@ -34,10 +36,23 @@ class Output {
 	static var dataFields: Array<Field> = [];
 
 	/**
+		An accumulated list of fields to generate on the singleton class that
+		will load the data at runtime.
+	**/
+	static var loaderFields: Array<Field> = [];
+
+	/**
 		A list of all saved files.
 		Used to determine if there's any old files that need to be deleted.
 	**/
 	static var savedFiles: Array<String> = [];
+
+	/**
+		Getter for `loaderFields`.
+	**/
+	public static function getLoaderFields() {
+		return loaderFields;
+	}
 
 	/**
 		Getter for `dataFields` that can only run once.
@@ -90,6 +105,138 @@ class Output {
 
 	public static function addDataField(field: Field) {
 		dataFields.push(field);
+	}
+
+	/**
+		Given an `enum` or `enum abstract` `Type`, this adds a function to the data loading singleton
+		to a case of said type as a `String`.
+	**/
+	public static function addDataEnumLoader(enumOrAbstractType: Type, enumTypeExpressionPos: Position, enumValueExpression: Expr, defaultValueName: String) {
+		static var isAdded: Map<String, Bool> = [];
+
+		if(isAdded.exists(Std.string(enumOrAbstractType))) {
+			return;
+		}
+
+		final cases = getCaseDataFromBaseType(enumOrAbstractType, enumTypeExpressionPos, defaultValueName);
+		if(cases == null) {
+			return;
+		}
+
+		final switchExpr = {
+			expr: ESwitch(macro name, cases.slice(1), cases[0].expr),
+			pos: enumValueExpression.pos
+		}
+
+		final name = getFunctionForEnumType(enumOrAbstractType);
+		if(name == null) {
+			return;
+		}
+
+		loaderFields.push({
+			name: (name : String),
+			access: [AStatic],
+			pos: enumTypeExpressionPos,
+			kind: FFun({
+				args: [{ name: "name", type: macro : String }],
+				expr: macro return $switchExpr
+			})
+		});
+	}
+
+	/**
+		Given a `Type` that's a `TEnum` or `TAbstract`, returns a list of `Case`s for each
+		enum case or enum abstract variable.
+
+		The case conditional value being the `String` name of the enum case, the return value
+		being the actual enum value.
+	**/
+	static function getCaseDataFromBaseType(enumOrAbstractType: Type, errorPos: Position, defaultCaseName: String): Array<Case> {
+		var enumType = null;
+		var abstractType = null;
+		switch(enumOrAbstractType) {
+			case TEnum(_.get() => e, []): enumType = e;
+			case TAbstract(_.get() => absType, []) if(absType.meta.has(":enum")): abstractType = absType;
+			case t: #if macro Context.error("Invalid Modifaxe enum type " + t, errorPos); #end
+		}
+
+		var defaultCase = null;
+
+		final identifiers: Null<Array<{ name: String, expr: Expr }>> = if(enumType != null) {
+			// Get list of enum cases
+			final result = [];
+			for(name => field in enumType.constructs) {
+				final enumTypePath = getBaseTypePathAsExpr(enumType);
+				switch(field.type) {
+					case TEnum(_, []): {
+						final c = { name: name, expr: macro $enumTypePath.$name };
+						if(defaultCaseName == name) defaultCase = c;
+						result.push(c);
+					}
+					case _:
+				}
+			}
+			result;
+		} else if(abstractType != null && abstractType.impl != null) {
+			// Get list of enum abstract variables
+			[
+				for(f in abstractType.impl.get().statics.get()) {
+					final abstractTypePath = getBaseTypePathAsExpr(abstractType);
+					final name = f.name;
+					final c = { name: name, expr: macro $abstractTypePath.$name };
+					if(defaultCaseName == name) defaultCase = c;
+					c;
+				}
+			];
+		} else {
+			null;
+		}
+
+		if(defaultCase == null || identifiers == null) {
+			return [];
+		}
+
+		return [
+			for(ident in [defaultCase].concat(identifiers)) {
+				{ values: [#if macro macro $v{ident.name} #end], expr: ident.expr }
+			}
+		];
+	}
+
+	/**
+		Converts a `BaseType` to its dot-path `Expr`.
+	**/
+	static function getBaseTypePathAsExpr(baseType: BaseType) {
+		final fields = baseType.pack.copy();
+		if(baseType.module != baseType.name) {
+			fields.push(baseType.module);
+		}
+		fields.push(baseType.name);
+		return MacroStringTools.toFieldExpr(fields);
+	}
+
+	/**
+		Generates the unique "loader" function name for the `enumType` provided.
+	**/
+	public static function getFunctionForEnumType(enumType: Type): Null<String> {
+		final baseType: Null<BaseType> = switch(enumType) {
+			case TEnum(_.get() => e, []): e;
+			case TAbstract(_.get() => a, []): a;
+			case _: null;
+		}
+
+		if(baseType == null) {
+			return null;
+		}
+
+		final buf = new StringBuf();
+		buf.add("load_");
+		for(p in baseType.pack) {
+			buf.add(p);
+			buf.add("_");
+		}
+		buf.add(baseType.name);
+		return buf.toString();
 	}
 
 	/**

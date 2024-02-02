@@ -25,6 +25,7 @@ typedef ModifaxeState = {
 class Builder {
 	var currentEntries: Array<Entry> = [];
 	var currentSection: Null<Section> = null;
+	var currentNames: Map<String, Bool> = [];
 
 	var state: Array<ModifaxeState> = [];
 
@@ -124,6 +125,7 @@ class Builder {
 		if(currentSection.hasEntries()) {
 			Output.addSectionToFile(currentSection, state.format, state.file);
 			currentSection = null;
+			currentNames = [];
 			return e;
 		}
 
@@ -161,17 +163,7 @@ class Builder {
 	function processConstant(expr: Expr, context: ExprMapContext, overrideName: Null<String> = null): Null<Expr> {
 		return switch(expr.expr) {
 			case EMeta({ name: _ == Meta.Mod => true, params: params }, innerExpr) if(params != null): {
-				var newName = null;
-				for(p in params) {
-					switch(p.expr) {
-						case EConst(CIdent(name) | CString(name, _)): {
-							newName = name;
-							break;
-						}
-						case _:
-					}
-				}
-				processConstant(innerExpr, context, newName);
+				processModMeta(innerExpr, params, context, overrideName);
 			}
 			case EConst(CIdent(id)) if(id == "true" || id == "false"): {
 				makeEntry(0, overrideName, id, expr, context);
@@ -192,16 +184,83 @@ class Builder {
 	}
 
 	/**
+		Processes a `@:mod EXPR` expression.
+	**/
+	function processModMeta(innerExpr: Expr, params: Array<Expr>, context: ExprMapContext, name: Null<String>) {
+		// Parse `@:mod` arguments
+		var newName = null;
+		var enumTypeExpr: Null<Expr> = null;
+		for(p in params) {
+			switch(p) {
+				case { expr: EConst(CIdent(name) | CString(name, _)) }: {
+					newName = name;
+					break;
+				}
+				case macro Enum=$name: {
+					enumTypeExpr = name;
+				}
+				case _:
+			}
+		}
+		
+		// If not an Enum, call `processConstant` normally
+		if(enumTypeExpr == null) {
+			return processConstant(innerExpr, context, newName);
+		}
+
+		// Try and determine `Type` from enum path expression
+		final enumType: Null<Type> = #if macro try { Context.getType(dotPathExprToString(enumTypeExpr)); } catch(e) #end { null; }
+		if(enumType == null) {
+			return #if macro Context.error("Could not determine type.", enumTypeExpr.pos) #else innerExpr #end;
+		}
+
+		// Replace enum identifier constant or generate error
+		return switch(innerExpr.expr) {
+			case EConst(CIdent(ident)): {
+				Output.addDataEnumLoader((enumType : Type), enumTypeExpr.pos, innerExpr, ident);
+				makeEntry(4, name ?? context.generateName(), ident, innerExpr, context, enumType);
+			}
+			case _: {
+				#if macro
+				Context.error("Enum constant must just be identifier.", innerExpr.pos);
+				#end
+				innerExpr;
+			}
+		}
+	}
+
+	/**
+		Converts an `Expr` of identifiers and field access into a dot-path `String`.
+	**/
+	function dotPathExprToString(e: Expr) {
+		return switch(e.expr) {
+			case EConst(CIdent(c)): c;
+			case EField(e2, field, _): dotPathExprToString(e2) + "." + field;
+			case EParenthesis(e): dotPathExprToString(e);
+			case _: "";
+		}
+	}
+
+	/**
 		Adds an entry and returns its access expression.
 	**/
-	function makeEntry(type: Int, name: Null<String>, content: String, expr: Expr, context: ExprMapContext) {
+	function makeEntry(type: Int, name: Null<String>, content: String, expr: Expr, context: ExprMapContext, enumType: Null<Type> = null) {
 		if(currentSection == null) {
 			throw "Cannot create entries without section.";
 		}
 
-		final name = name ?? context.generateName();
+		var name = name ?? context.generateName();
 
-		var complexType = null;
+		// Ensure name is unique
+		if(currentNames.exists(name)) {
+			name += "_Line" + haxe.macro.PositionTools.toLocation(expr.pos).range.start.line;
+		}
+		while(currentNames.exists(name)) {
+			name += "_";
+		}
+		currentNames.set(name, true);
+
+		var complexType;
 		var entryValue: EntryValue;
 
 		switch(type) {
@@ -220,6 +279,10 @@ class Builder {
 			case 3: {
 				complexType = macro : String;
 				entryValue = EString(content);
+			}
+			case 4 if(enumType != null): {
+				complexType = haxe.macro.TypeTools.toComplexType(enumType) ?? macro : Dynamic;
+				entryValue = EEnum(content, enumType);
 			}
 			case _: throw "Invalid type id.";
 		}

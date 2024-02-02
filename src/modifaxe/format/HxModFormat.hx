@@ -72,10 +72,20 @@ class HxModFormat extends Format {
 						case EInt(_): macro loader.nextInt(0);
 						case EFloat(_): macro loader.nextFloat(0.0);
 						case EString(_): macro loader.nextString("");
+						case EEnum(_, enumType): {
+							final enumLoadIdent = Output.getFunctionForEnumType(enumType);
+							if(enumLoadIdent != null) {
+								macro ModifaxeLoader.$enumLoadIdent(loader.nextEnumIdentifier(""));
+							} else {
+								null;
+							}
+						}
 					}
 
 					// Store expression in list.
-					expressions.push(macro ModifaxeData.$identifier = $valueExpr);
+					if(valueExpr != null) {
+						expressions.push(macro ModifaxeData.$identifier = $valueExpr);
+					}
 				}
 			}
 

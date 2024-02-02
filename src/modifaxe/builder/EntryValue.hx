@@ -11,6 +11,7 @@ enum EntryValue {
 	EInt(intString: String);
 	EFloat(floatString: String);
 	EString(string: String);
+	EEnum(identifier: String, type: haxe.macro.Type);
 }
 
 /**
@@ -23,6 +24,7 @@ class EntryValueFunctions {
 			case EInt(_): "i";
 			case EFloat(_): "f";
 			case EString(_): "s";
+			case EEnum(_, _): "e";
 		}
 	}
 
@@ -32,6 +34,7 @@ class EntryValueFunctions {
 			case EInt(_): 105;
 			case EFloat(_): 102;
 			case EString(_): 115;
+			case EEnum(_, _): 101;
 		}
 	}
 
@@ -41,6 +44,7 @@ class EntryValueFunctions {
 			case EInt(intString): intString;
 			case EFloat(floatString): floatString;
 			case EString(string): '"$string"';
+			case EEnum(identifier, _): identifier;
 		}
 	}
 }
