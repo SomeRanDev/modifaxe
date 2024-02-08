@@ -28,9 +28,17 @@ class Builder {
 	var currentSection: Null<Section> = null;
 	var currentNames: Map<String, Bool> = [];
 
+	var files = new FileCollection();
+
 	var state: Array<ModifaxeState> = [];
 
 	var index = 0;
+
+	/**
+		An accumulated list of fields to generate on the singleton class that
+		will contain all the data at runtime.
+	**/
+	var staticDataFields: Array<Field> = [];
 
 	public function new() {
 	}
@@ -124,10 +132,16 @@ class Builder {
 		final e = (state.modOnly ? mapExprModOnly : mapExpr)(expr, new ExprMapContext());
 
 		if(currentSection.hasEntries()) {
-			Output.addSectionToFile(currentSection, state.format, state.file);
+			files.addSectionToFile(currentSection, state.format, state.file);
+			Output.addSectionToAllFiles(currentSection, state.format, state.file);
 			currentSection = null;
 			currentNames = [];
-			return e;
+
+			// Prepend loader function to this function
+			return macro {
+				$i{getLoadFunctionName()}();
+				@:mergeBlock $e;
+			};
 		}
 
 		return null;
@@ -283,9 +297,9 @@ class Builder {
 		final entry = currentSection.addEntry(name, entryValue);
 		final entryUniqueName = entry.getUniqueName();
 
-		addDataField(entry.getUniqueName(), complexType, expr);
+		addDataField(entryUniqueName, complexType, expr);
 
-		return macro ModifaxeData.$entryUniqueName;
+		return macro $i{entryUniqueName};
 	}
 
 	function ensureUniqueName(name: String, expressionPos: Position) {
@@ -302,12 +316,62 @@ class Builder {
 		Adds a field to the runtime data class.
 	**/
 	function addDataField(name: String, complexType: ComplexType, originalExpression: Expr) {
-		Output.addDataField({
+		staticDataFields.push({
 			name: name,
 			access: [APublic, AStatic],
 			pos: originalExpression.pos,
 			kind: FVar(complexType, originalExpression)
 		});
+	}
+
+	/**
+		A consistent reference to the name of the static data-loader function generated
+		on classes.
+	**/
+	static function getLoadFunctionName() {
+		return "_modifaxe_loadData";
+	}
+
+	/**
+		Generates the data-loader function for the class.
+	**/
+	public function generateLoadFunction() {
+		final loadExpressions = [];
+		for(formatIdent => fileList in files.generateFileList()) {
+			final format = formatIdent.getFormat();
+			if(format != null) {
+				loadExpressions.push(format.generateLoadExpression(fileList)); // Generate loading code
+			}
+		}
+
+		final loadFunctionExpr = macro {
+			static var i = 0;
+			if(i != ModifaxeLoader.refreshCount) {
+				i = ModifaxeLoader.refreshCount;
+			} else {
+				return;
+			}
+
+			$b{loadExpressions};
+		}
+
+		staticDataFields.push({
+			name: getLoadFunctionName(),
+			access: [AStatic],
+			pos: loadFunctionExpr.pos,
+			kind: FFun({
+				args: [],
+				expr: loadFunctionExpr
+			})
+		});
+	}
+
+	/**
+		Returns a list of `Field`s to be added to the class that had this `Builder` 
+		generated in their `@:build` macro.
+	**/
+	public function getAdditionalFields(): Array<Field> {
+		return staticDataFields;
 	}
 }
 

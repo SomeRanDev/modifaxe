@@ -74,6 +74,13 @@ function build() {
 		}
 	}
 
+	if(builder != null) {
+		builder.generateLoadFunction();
+		for(f in builder.getAdditionalFields()) {
+			fields.push(f);
+		}
+	}
+
 	return fields;
 }
 

@@ -8,7 +8,7 @@ using StringTools;
 	The goal is highest-performance and minimal Haxe API usage.
 
 	This should only use `fastCodeAt` on `String`, AND avoid all concatenation
-	(except using `substring` to generate the return `String` of `nextValueText`).
+	(except using `substring` to generate the return `String` of `nextEntry`).
 **/
 class ModParser {
 	var pos: Int;
@@ -16,12 +16,89 @@ class ModParser {
 	var lineStart: Int;
 	var content: String;
 
+	#if !modifaxe_parser_no_map_cache
+	/**
+		Used with a parser set up through `fromEntryCount` to set where entries
+		will be retrieved from the cache.
+	**/
+	var entriesCachePos: Int = 0;
+
+	/**
+		Stores all the parsed entries.
+	**/
+	var entriesCache: Array<String> = [];
+	#end
+
 	public function new(filePath: String) {
 		pos = 0;
 		line = 0;
 		lineStart = 0;
 		content = loadString(filePath);
 	}
+
+	/**
+		Creates an instance of `ModParser` starting from a specific entry.
+
+		`startEntryCount` should be the number of entries ignored before parsing begins.
+	**/
+	public static function fromEntryCount(filePath: String, startEntryCount: Int) {
+		#if modifaxe_parser_no_map_cache
+
+		// If not using a cache, make a fresh `ModParser` and find the starting entry
+		final result = new ModParser(filePath);
+		for(i in 0...startEntryCount) {
+			result.nextEntry();
+		}
+		return result;
+
+		#else
+
+		// Haxe 4.3.2 required for `static var _: Map`
+		#if (haxe < version("4.3.2"))
+		#error "Haxe 4.3.2+ required for local static Map. (See #11193, #11301)";
+		#end
+
+		// Clear cache if `Modifaxe` has been reloaded
+		static var cache: Map<String, ModParser> = [];
+		static var i = 0;
+		if(i != Modifaxe.refreshCount) {
+			i = Modifaxe.refreshCount;
+			cache = [];
+		}
+
+		// Generate `.modhx` parser if one for this file doesn't exist
+		var result = cache.get(filePath);
+		if(result == null) {
+			result = new ModParser(filePath); 
+			cache.set(filePath, result);
+		}
+
+		// Go to starting entry
+		result.goToEntry(startEntryCount);
+		return result;
+
+		#end
+	}
+
+	#if !modifaxe_parser_no_map_cache
+
+	/**
+		Places the position of the parser directly after the number 
+	**/
+	public function goToEntry(entryIndex: Int) {
+		// Parse entries until `entryIndex`.
+		while(entryIndex >= entriesCache.length) {
+			final e = nextEntry();
+			if(e == null) {
+				// TODO: Too many entries expected? Should this generate error??
+				break;
+			}
+		}
+
+		entriesCachePos = entryIndex;
+	}
+
+	#end
 
 	/**
 		Loads the `String` content from a text file at `filePath`.
@@ -36,7 +113,7 @@ class ModParser {
 		Reports an parsing error.
 		Can be dynamically overwritten with custom error-reporting code.
 	**/
-	public #if modiflaxe_no_dynamic_functions dynamic #end function onError(error: ModParserError) {
+	public #if modiflaxe_no_dynamic_functions dynamic #end function onError(error: ModParserError, skipToNextLine: Bool) {
 		// Print
 		final lineNumberStr = Std.string(line + 1);
 		var line1 = "".lpad(" ", lineNumberStr.length + 1) + " |";
@@ -45,7 +122,9 @@ class ModParser {
 		Sys.println('[Modifaxe Parse Error]\n$line1\n$line2\n$line3');
 
 		// Skip to next line
-		pos = getEndOfCurrentLine();
+		if(skipToNextLine) {
+			pos = getEndOfCurrentLine();
+		}
 	}
 	#end
 
@@ -67,7 +146,29 @@ class ModParser {
 	/**
 		Gets the next value entry as a `String`.
 	**/
-	public function nextValueText(): Null<String> {
+	public function nextEntry(): Null<String> {
+		#if !modifaxe_parser_no_map_cache
+		if(entriesCachePos < entriesCache.length) {
+			return entriesCache[entriesCachePos++];
+		}
+		#end
+
+		final result = nextEntryImpl();
+
+		#if !modifaxe_parser_no_map_cache
+		if(result != null) {
+			entriesCache.push(result);
+			entriesCachePos++;
+		}
+		#end
+
+		return result;
+	}
+
+	/**
+		The implementation for `nextEntry`.
+	**/
+	function nextEntryImpl(): Null<String> {
 		final len = content.length;
 
 		var start = pos;
@@ -107,7 +208,7 @@ class ModParser {
 				case 91: {
 					#if !modifaxe_parser_no_error_check
 					if(pos - lineStart > 0) {
-						onError(SectionShouldBeStartOfLine);
+						onError(SectionShouldBeStartOfLine, false);
 					}
 					#end
 
@@ -123,6 +224,12 @@ class ModParser {
 
 				// b, i, f, s, or e for the type
 				case 98 | 105 | 102 | 115 | 101: {
+					#if !modifaxe_parser_no_error_check
+					if(pos - lineStart > 0) {
+						onError(EntryShouldBeStartOfLine, false);
+					}
+					#end
+
 					final type = switch(c) {
 						case 98: 0; // bool
 						case 105: 1; // int
@@ -167,7 +274,7 @@ class ModParser {
 
 				case _: {
 					#if !modifaxe_parser_no_error_check
-					onError(UnexpectedChar(c));
+					onError(UnexpectedChar(c), true);
 					#end
 					pos++;
 				}
@@ -181,7 +288,7 @@ class ModParser {
 		Calls `getValueText` and parses it as a `Bool`.
 	**/
 	public function nextBool(defaultValue: Bool): Bool {
-		final line = nextValueText();
+		final line = nextEntry();
 		if(line != null) {
 			return line == "true";
 		}
@@ -192,7 +299,7 @@ class ModParser {
 		Calls `getValueText` and parses it as an `Int`.
 	**/
 	public function nextInt(defaultValue: Int): Int {
-		final line = nextValueText();
+		final line = nextEntry();
 		if(line != null) {
 			return Std.parseInt(line) ?? defaultValue;
 		}
@@ -203,7 +310,7 @@ class ModParser {
 		Calls `getValueText` and parses it as a `Float`.
 	**/
 	public function nextFloat(defaultValue: Float): Float {
-		final line = nextValueText();
+		final line = nextEntry();
 		if(line != null) {
 			return Std.parseFloat(line);
 		}
@@ -215,7 +322,7 @@ class ModParser {
 		This function doesn't do anything at the moment; it exists for consistency.
 	**/
 	public function nextString(defaultValue: String) {
-		final line = nextValueText();
+		final line = nextEntry();
 		return line;
 	}
 
@@ -224,7 +331,7 @@ class ModParser {
 		This function doesn't do anything at the moment; it exists for consistency.
 	**/
 	public function nextEnumIdentifier(defaultValue: String) {
-		final line = nextValueText();
+		final line = nextEntry();
 		return line;
 	}
 
@@ -299,7 +406,7 @@ class ModParser {
 			return true;
 		}
 		#if !modifaxe_parser_no_error_check
-		onError(ExpectedChar(91));
+		onError(ExpectedChar(char), true);
 		#end
 		return false;
 	}
@@ -313,7 +420,7 @@ class ModParser {
 	inline function expectIdentifier(allowDot: Bool) {
 		if(!nextIdentifier(allowDot)) {
 			#if !modifaxe_parser_no_error_check
-			onError(ExpectedIdentifier);
+			onError(ExpectedIdentifier, true);
 			#end
 		}
 	}
@@ -339,7 +446,7 @@ class ModParser {
 			}
 			case _: {
 				#if !modifaxe_parser_no_error_check
-				onError(ExpectedBool);
+				onError(ExpectedBool, true);
 				#end
 			}
 		}
@@ -363,7 +470,7 @@ class ModParser {
 			pos++;
 		} else {
 			#if !modifaxe_parser_no_error_check
-			onError(ExpectedDigit);
+			onError(ExpectedDigit, true);
 			#end
 		}
 
@@ -394,7 +501,7 @@ class ModParser {
 			pos++;
 		} else {
 			#if !modifaxe_parser_no_error_check
-			onError(ExpectedDigit);
+			onError(ExpectedDigit, true);
 			#end
 		}
 
@@ -449,7 +556,7 @@ class ModParser {
 							case 116: "\t";
 							case _: {
 								#if !modifaxe_parser_no_error_check
-								onError(UnsupportedEscapeSequence);
+								onError(UnsupportedEscapeSequence, false);
 								#end
 								"";
 							}

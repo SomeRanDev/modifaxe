@@ -2,9 +2,8 @@ package modifaxe;
 
 #if (macro || modifaxe_runtime)
 
-import haxe.macro.Compiler;
 import haxe.macro.Context;
-import haxe.macro.Expr;
+import haxe.macro.Type;
 
 import modifaxe.Output;
 import modifaxe.config.Define;
@@ -25,67 +24,23 @@ function init() {
 	// Apply `@:build` meta to path filter
 	Modifaxe.addPath(Context.definedValue(Define.PathFilter) ?? "");
 
-	// Special technique to generate code post-@:build macros
-	// Hope this is okay???
-	Context.onTypeNotFound(function(name) {
-		return switch(name) {
-			case "ModifaxeData": makeModifaxeData();
-			case "ModifaxeLoader": makeModifaxeLoader();
-			case _: null;
-		}
-	});
+	// Save data files
+	Context.onAfterTyping(onAfterTyping);
 
 	#end
 }
 
-#if macro
-
 /**
-	Generate class that stores Modifaxe data.
+	Called after all `@:build` macros.
 **/
-function makeModifaxeData(): TypeDefinition {
-	return {
-		name: "ModifaxeData",
-		pack: [],
-		pos: Context.currentPos(),
-		fields: Output.extractDataFields(),
-		kind: TDClass(null, [], false, true, false)
-	}
-}
-
-/**
-	Generate function that loads Modifaxe data.
-**/
-function makeModifaxeLoader(): TypeDefinition {
+function onAfterTyping(_: Array<ModuleType>) {
 	// Process all files and store their load expressions
-	final loadExpressions = [];
 	for(formatIdent => fileList in Output.generateFileList()) {
 		final format = formatIdent.getFormat();
-		format.saveModFiles(fileList); // Saves the mod files for this format
-		loadExpressions.push(format.generateLoadExpression(fileList)); // Generate loading code
+		if(format != null) {
+			format.saveModFiles(fileList); // Saves the mod files for this format
+		}
 	}
-
-	// Generate the contents of `ModifaxeLoader.load`.
-	final loadExpr = if(loadExpressions.length > 0) {
-		macro $b{loadExpressions}
-	} else {
-		macro {}
-	}
-
-	// Generate TypeDefinition
-	final result = macro class ModifaxeLoader {
-		public static function load() $loadExpr;
-	}
-
-	for(field in Output.getLoaderFields()) {
-		result.fields.push(field);
-	}
-
-	Output.trackAndDeleteOldFiles();
-
-	return result;
 }
-
-#end
 
 #end

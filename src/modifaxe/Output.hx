@@ -17,29 +17,16 @@ import modifaxe.format.FormatIdentifier;
 **/
 class Output {
 	/**
-		A `Map` of the files that should be generated.
-
-		The outer map uses format's identifier as the key.
-		The inner map uses the absolute file path for the key.
+		A collection for all files, sections, and entries accumulated for
+		the entire project.
 	**/
-	static var files: Map<FormatIdentifier, Map<String, File>> = [];
-
-	/**
-		This is set to `true` once a single entry has been added to `files`.
-	**/
-	static var hasAnyFiles: Bool = false;
-
-	/**
-		An accumulated list of fields to generate on the singleton class that
-		will contain all the data at runtime.
-	**/
-	static var dataFields: Array<Field> = [];
+	static var allFiles = new FileCollection();
 
 	/**
 		An accumulated list of fields to generate on the singleton class that
 		will load the data at runtime.
 	**/
-	static var loaderFields: Array<Field> = [];
+	static var loaderFields: Array<TypeDefinition> = [];
 
 	/**
 		A list of all saved files.
@@ -55,56 +42,10 @@ class Output {
 	}
 
 	/**
-		Getter for `dataFields` that can only run once.
-		If it runs multiple times, that means something is wrong.
+		Adds a section to the project's complete Modifaxe file collection.
 	**/
-	public static function extractDataFields() {
-		static var hasExtractedFields: Bool = false;
-
-		if(hasExtractedFields) {
-			throw "Should not call this function more than once.";
-		} else {
-			hasExtractedFields = true;
-		}
-		
-		final result = dataFields;
-		dataFields = [];
-		return result;
-	}
-
-	/**
-		Adds a section to a file given its path and format.
-	**/
-	public static function addSectionToFile(section: Section, format: Null<FormatIdentifier>, filePath: Null<String>) {
-		// Use default file path if `null`
-		filePath ??= #if macro Context.definedValue(Define.DefaultFilePath) ?? #end "data";
-
-		// Use default format if `null`
-		format ??= #if macro Context.definedValue(Define.DefaultFormat) ?? #end "modhx";
-
-		if(filePath == null || format == null) return;
-
-		if(!files.exists(format)) {
-			files.set(format, []);
-		}
-
-		final filePathMap = files.get(format);
-		if(filePathMap == null) return;
-
-		final absolutePath = filePath.length == 0 ? filePath : sys.FileSystem.absolutePath(filePath);
-		if(!filePathMap.exists(absolutePath)) {
-			filePathMap.set(absolutePath, new File(filePath));
-			hasAnyFiles = true;
-		}
-
-		final file = filePathMap.get(absolutePath);
-		if(file != null) {
-			file.addSection(section);
-		}
-	}
-
-	public static function addDataField(field: Field) {
-		dataFields.push(field);
+	public static function addSectionToAllFiles(section: Section, format: Null<FormatIdentifier>, filePath: Null<String>) {
+		allFiles.addSectionToFile(section, format, filePath);
 	}
 
 	/**
@@ -133,15 +74,33 @@ class Output {
 			return;
 		}
 
-		loaderFields.push({
-			name: (name : String),
-			access: [AStatic],
+		final functionTD = {
+			name: "Modifaxe_" + (name : String),
 			pos: enumTypeExpressionPos,
-			kind: FFun({
-				args: [{ name: "name", type: macro : String }],
-				expr: macro return $switchExpr
-			})
-		});
+			pack: ["modifaxe", "enumloaders"],
+			fields: [{
+				name: (name : String),
+				access: [APublic, AStatic],
+				pos: enumTypeExpressionPos,
+				kind: FFun({
+					args: [{ name: "name", type: macro : String }],
+					expr: macro return $switchExpr
+				})
+			}],
+			kind: TDClass(null, null, false, true, false),
+
+			#if !modifaxe_make_enum_loaders_reflective
+			// This class is used internally, so let's optimize it a little.
+			meta: [
+				{ name: ":unreflective", pos: enumTypeExpressionPos },
+				{ name: ":nativeGen", pos: enumTypeExpressionPos }
+			]
+			#end
+		};
+
+		#if macro
+		Context.defineType(functionTD);
+		#end
 	}
 
 	/**
@@ -240,27 +199,17 @@ class Output {
 	}
 
 	/**
-		Returns `true` if there are any `Builder` instances that require `.modhx` generation.
+		Returns `true` if files need to be generated for this compilation.
 	**/
-	public static function shouldGenerateModHx() {
-		return hasAnyFiles;
+	public static function shouldGenerate() {
+		return !allFiles.isEmpty();
 	}
 
 	/**
-		Returns `true` if there are any `Builder` instances that require `.modhx` generation.
+		Returns result of `generateFileList` for all `File`s.
 	**/
 	public static function generateFileList(): Map<FormatIdentifier, Array<File>> {
-		final result: Map<FormatIdentifier, Array<File>> = [];
-
-		for(format => fileMap in files) {
-			final fileList: Array<File> = [];
-			for(_ => fileObj in fileMap) {
-				fileList.push(fileObj);
-			}
-			result.set(format, fileList);
-		}
-
-		return result;
+		return allFiles.generateFileList();
 	}
 
 	/**

@@ -8,6 +8,21 @@ import haxe.macro.Compiler;
 **/
 class Modifaxe {
 	/**
+		Used at runtime to check if `reload` has been called.
+	**/
+	public static var refreshCount(default, null): Int = 1;
+
+	/**
+		Increments `refreshCount`.
+
+		When loaders detect that their "count" does not match `Modifaxe.refreshCount`,
+		they will update themselves.
+	**/
+    public static function reload() {
+        refreshCount++;
+    }
+
+	/**
 		Applies the Modifaxe build macro to a path filter.
 
 		This already runs once with the value of `-D modifaxe_path_filter`, but can be

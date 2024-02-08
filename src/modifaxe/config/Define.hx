@@ -63,6 +63,21 @@ enum abstract Define(String) from String to String {
 	var UseRelativePath = "modifaxe_use_relative_path";
 
 	/**
+		-D modifaxe_make_enum_loaders_reflective
+
+		If defined, the generated enum-loading classes will not have `@:nativeGen` and `@:unreflective`.
+	**/
+	var MakeEnumLoaderReflective = "modifaxe_make_enum_loaders_reflective";
+
+	/**
+		-D modifaxe_parser_no_map_cache
+
+		If defined, disables the use of `Map` to cache `.modhx` parsers and their entry positions.
+		Useful for custom targets with minimal API support.
+	**/
+	var ParserNoMapCache = "modifaxe_parser_no_map_cache";
+
+	/**
 		-D modifaxe_no_error_check
 
 		Disables error checking on `.modhx` parsing (improves performance).
