@@ -19,6 +19,7 @@ Change a value -> recompile -> test -> repeat. Every programmer has experienced 
 | [Metadata Configuration](#metadata-configuration) | How to configure the metadata. |
 | [Define Configuration](#defines) | A list of defines to set the library preferences. |
 | [.modhx Format](#modhx-format) | An explanation of the `.modhx` format. |
+| [How it Works](#how-it-works) | How Modifaxe transforms your project to function. |
 
 &nbsp;
 &nbsp;
@@ -87,6 +88,27 @@ To only use constants that have the `@:mod` metadata, the `ModOnly` argument can
 function getWindowSize() {
 	return @:mod("my_num") 800 + 100;
 }
+```
+
+&nbsp;
+
+The `@:mod` metadata must also be used to allow for enum configuration. Use the `Enum` argument to set the path to the enum type.
+
+```haxe
+enum Color {
+	Red;
+	Green;
+	Blue;
+}
+
+@:modifaxe
+function colorWindow() {
+	window.setColor(@:mod(Enum=Main.Color) Red);
+}
+```
+```haxe
+[Main.colorWindow]
+i.Argument0: Red
 ```
 
 &nbsp;
@@ -180,3 +202,43 @@ There are four types supported:
 The `name` must be a valid Haxe variable name.
 
 The `value` must be a valid constant Haxe expression of the specified type.
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+## How it Works
+
+Each class that uses `@:modifaxe` is given a static function named `_modifaxe_loadData` and a static var for each constant that can be modified.
+
+At the start of any function with a changeable constant, `_modifaxe_loadData` checks its internal counter to see if it matches with the `Modifaxe` counter. If it doesn't, it runs the procedrually-generated loading code for all the static variables. Otherwise, nothing happens.
+
+```haxe
+// Before
+@:modifaxe
+class MyClass {
+	public function doSomething() {
+		trace(123);
+	}
+}
+```
+```haxe
+// After
+class MyClass {
+	static var MyClass_doSomething_Argument0 = 123;
+
+	static function _modifaxe_loadData() {
+		static var count = 0;
+		if(count != Modifaxe.refreshCount) count = Modifaxe.refreshCount;
+		else return;
+
+		final parser = modifaxe.runtime.ModParser.fromEntryCount("data.modhx", 0);
+		MyClass_doSomething_Argument0 = parser.nextInt(123);
+	}
+
+	public function doSomething() {
+		_modifaxe_loadData();
+		trace(MyClass_doSomething_Argument0);
+	}
+}
+```
