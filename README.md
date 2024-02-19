@@ -15,11 +15,12 @@ Change a value -> recompile -> test -> repeat. Every programmer has experienced 
 
 | Topic | Description |
 | --- | --- |
-| [Installation](#installation) | How to install this library into your project. |
-| [Metadata Configuration](#metadata-configuration) | How to configure the metadata. |
+| [Installation](#installation) | How to install this library into your project.       |
+| [Reloading](#reloading)       | How to reload values at runtime.                     |
+| [Metadata Configuration](#metadata-configuration) | How to configure the metadata.   |
 | [Define Configuration](#defines) | A list of defines to set the library preferences. |
-| [.modhx Format](#modhx-format) | An explanation of the `.modhx` format. |
-| [How it Works](#how-it-works) | How Modifaxe transforms your project to function. |
+| [.modhx Format](#modhx-format) | An explanation of the `.modhx` format.              |
+| [How it Works](#how-it-works) | How Modifaxe transforms your project to function.    |
 
 &nbsp;
 &nbsp;
