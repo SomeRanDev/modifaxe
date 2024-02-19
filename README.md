@@ -48,20 +48,32 @@ function getWindowSize() {
 }
 ```
 
-Run `Modifaxe.load()` at the start of your program:
-```haxe
-function main() {
-	Modifaxe.load();
-	// ...
-}
-```
-
 Compile your Haxe project to a `sys` target with file-system access.
 
 Modify the value(s) in the generated `values.modhx` file:
 ```haxe
 [Main.getWindowSize]
 i.return: 800
+```
+
+Aaand run!
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+## Reloading
+
+To reload the values at runtime, `Modifaxe.reload` can be called.
+
+This can be used to generate your own makeshift hot-reloading system, like:
+```haxe
+// Update function in some random game engine...
+function update() {
+	if(isDebugReloadKeyPressed()) {
+		Modifaxe.reload();
+	}
+}
 ```
 
 &nbsp;
