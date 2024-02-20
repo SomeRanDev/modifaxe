@@ -29,19 +29,19 @@ class FileCollection {
 	public function new() {
 	}
 
-    /**
-        Returns `true` if no sections have been added to this collection.
-    **/
-    public function isEmpty() {
-        return !hasAnyFiles;
-    }
+	/**
+		Returns `true` if no sections have been added to this collection.
+	**/
+	public function isEmpty() {
+		return !hasAnyFiles;
+	}
 
-    /**
-        Clears the entire collection.
-    **/
-    public function clear() {
-        files = [];
-    }
+	/**
+		Clears the entire collection.
+	**/
+	public function clear() {
+		files = [];
+	}
 
 	/**
 		Adds a section to a file given its path and format.
@@ -74,7 +74,7 @@ class FileCollection {
 		}
 	}
 
-    /**
+	/**
 		Generates an `Array` of `File`s for each format.
 	**/
 	public function generateFileList(): Map<FormatIdentifier, Array<File>> {

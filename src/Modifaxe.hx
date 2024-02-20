@@ -18,9 +18,9 @@ class Modifaxe {
 		When loaders detect that their "count" does not match `Modifaxe.refreshCount`,
 		they will update themselves.
 	**/
-    public static function reload() {
-        refreshCount++;
-    }
+	public static function reload() {
+		refreshCount++;
+	}
 
 	/**
 		Applies the Modifaxe build macro to a path filter.
