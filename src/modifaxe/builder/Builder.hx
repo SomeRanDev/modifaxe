@@ -346,8 +346,8 @@ class Builder {
 
 		final loadFunctionExpr = macro {
 			static var i = 0;
-			if(i != ModifaxeLoader.refreshCount) {
-				i = ModifaxeLoader.refreshCount;
+			if(i != Modifaxe.refreshCount) {
+				i = Modifaxe.refreshCount;
 			} else {
 				return;
 			}
